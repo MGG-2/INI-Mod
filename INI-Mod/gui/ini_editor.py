@@ -1,12 +1,16 @@
+from .syntax_highlighter import SyntaxHighlighter
 import tkinter as tk
 from tkinter import ttk, filedialog, simpledialog, messagebox
 import configparser
+from tkinter import messagebox
 
 class INIEditor:
     def __init__(self, root):
         self.root = root
         self.root.title("INI File Editor")
         
+        self.ini_text = tk.Text(root, wrap=tk.WORD)
+        self.ini_text.pack(fill=tk.BOTH, expand=True)
         # Create a menu bar
         self.menu = tk.Menu(root)
         root.config(menu=self.menu)

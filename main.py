@@ -1,6 +1,6 @@
 from tkinter import ttk
 from ttkthemes import ThemedTk
-from INI_Mod.gui.ini_editor import INIEditor
+from gui.ini_editor import INIEditor
 
 def main():
     root = ThemedTk(theme="breeze")  # Set the theme to "breeze"
