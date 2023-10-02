@@ -11,7 +11,14 @@ class SyntaxHighlighter:
         self.text_widget.pack(fill=tk.BOTH, expand=True)
     
     def apply_syntax_highlighting(self):
+        # Get the current content from the text widget
         ini_content = self.text_widget.get(1.0, tk.END)
-        highlighted_ini = highlight(ini_content, IniLexer(), HtmlFormatter())
+
+        # Highlight the INI content using Pygments
+        highlighted_content = highlight(ini_content, IniLexer(), HtmlFormatter())
+
+        # Clear the text widget
         self.text_widget.delete(1.0, tk.END)
-        self.text_widget.insert(tk.END, highlighted_ini)
+
+        # Insert the highlighted content back into the text widget
+        self.text_widget.insert(tk.INSERT, highlighted_content)

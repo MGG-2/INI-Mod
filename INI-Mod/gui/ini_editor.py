@@ -1,27 +1,39 @@
-from .syntax_highlighter import SyntaxHighlighter
 import tkinter as tk
-from tkinter import ttk, filedialog, simpledialog, messagebox
-import configparser
-from tkinter import messagebox
+from tkinter import filedialog, messagebox  # Added missing imports
+from .syntax_highlighter import SyntaxHighlighter
+from utils.ini_parser import IniParser
+from ttkthemes import ThemedTk
 
 class INIEditor:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("INI File Editor")
+    def __init__(self, master):
+        self.master = master  # Fixed undefined variable issue
+        self.master.title("INI File Editor")
         
         self.ini_text = tk.Text(root, wrap=tk.WORD)
         self.ini_text.pack(fill=tk.BOTH, expand=True)
-        # Create a menu bar
-        self.menu = tk.Menu(root)
-        root.config(menu=self.menu)
+
+        # Change the theme
+        self.theme = ThemedTk(theme="arc")  # You can change "arc" to any other available theme
+
+        # Creating a menu bar
+        menubar = tk.Menu(master)
+        master.config(menu=menubar)
         
-        # Create a File menu
-        self.file_menu = tk.Menu(self.menu)
-        self.menu.add_cascade(label="File", menu=self.file_menu)
-        self.file_menu.add_command(label="Open INI File", command=self.open_ini_file)
-        self.file_menu.add_command(label="Save INI File", command=self.save_ini_file)
-        self.file_menu.add_separator()
-        self.file_menu.add_command(label="Exit", command=root.quit)
+        self.status_label = tk.Label(master, text="Welcome to INI-Mod", anchor=tk.W)
+        self.status_label.pack(fill=tk.BOTH)
+
+        # Creating a file menu
+        file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu.add_command(label='Open', command=self.open_file_dialog)
+        file_menu.add_command(label='Save', command=self.save_file_dialog)
+        file_menu.add_separator()
+        file_menu.add_command(label='Exit', command=master.destroy)
+        menubar.add_cascade(label='File', menu=file_menu)
+
+        # Creating a validate menu
+        validate_menu = tk.Menu(menubar, tearoff=0)
+        validate_menu.add_command(label='Validate', command=self.validate_content)
+        menubar.add_cascade(label='Validate', menu=validate_menu)
 
         # Create a context menu
         self.context_menu = tk.Menu(self.root, tearoff=0)
@@ -37,32 +49,35 @@ class INIEditor:
         # Create a Syntax Highlighting toggle button
         self.syntax_highlighting_enabled = tk.BooleanVar(value=True)
         self.highlighting_button = tk.Checkbutton(root, text="Enable Syntax Highlighting",
-                                                  variable=self.syntax_highlighting_enabled, command=self.toggle_syntax_highlighting)
+        variable=self.syntax_highlighting_enabled, command=self.toggle_syntax_highlighting)
         self.highlighting_button.pack()
 
         # Create a text widget to display INI content
-        self.ini_text = tk.Text(root, wrap=tk.WORD)
+        self.ini_text = tk.Text(self.master, wrap=tk.WORD)  # Fixed undefined variable issue
         self.ini_text.pack(fill=tk.BOTH, expand=True)
         
-    def open_ini_file(self):
-        file_path = filedialog.askopenfilename(filetypes=[("INI Files", "*.ini")])
-        if file_path:
-            config = configparser.ConfigParser()
-            try:
-                config.read(file_path)
-            except configparser.Error as e:
-                # Handle INI parsing errors
-                messagebox.showerror("INI Parsing Error", f"Error reading INI file: {e}")
-                return
-            ini_content = "\n".join([f"{section}:\n{dict(config[section])}" for section in config.sections()])
-            self.ini_text.delete(1.0, tk.END)
-            self.ini_text.insert(tk.END, ini_content)
-    
-    def save_ini_file(self):
-        file_path = filedialog.asksaveasfilename(filetypes=[("INI Files", "*.ini")])
-        if file_path:
+        self.highlighter = SyntaxHighlighter(self.ini_text)  # Fixed reference to self.tab1
+    def open_ini_file(self, file_path):
+        with open(file_path, 'r') as file:
+            content = file.read()
+            self.text_widget.delete(1.0, tk.END)
+            self.text_widget.insert(tk.INSERT, content)
+            self.highlighter.apply_syntax_highlighting()  # Add this line to apply syntax highlighting
+
+    def save_ini_file(self, file_path):
+        try:
+            content = self.text_widget.get(1.0, tk.END)
             with open(file_path, 'w') as file:
-                file.write(self.ini_text.get(1.0, tk.END))
+                file.write(content)
+            messagebox.showinfo("Success", "File saved successfully!")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while saving the file: {e}")
+
+    def validate_ini_content(self):
+        content = self.text_widget.get(1.0, tk.END)
+        parser = IniParser()
+        is_valid = parser.validate_ini(content)
+        return is_valid
 
     def toggle_syntax_highlighting(self):
         if self.syntax_highlighting_enabled.get():
@@ -88,7 +103,40 @@ class INIEditor:
     def redo(self):
         self.ini_text.edit_redo()
 
+    def open_file_dialog(self):
+        try:
+            file_path = filedialog.askopenfilename()
+            if file_path:
+                self.open_ini_file(file_path)
+                self.status_label.config(text=f"Opened file: {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while opening the file: {e}")
+            self.status_label.config(text="Error opening file")
+
+    def save_file_dialog(self):
+        try:
+            file_path = filedialog.asksaveasfilename(defaultextension=".ini")
+            if file_path:
+                self.save_ini_file(file_path)
+                self.status_label.config(text=f"Saved file: {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while saving the file: {e}")
+            self.status_label.config(text="Error saving file")
+            
+    def validate_content(self):
+        try:
+            is_valid = self.validate_ini_content()
+            if is_valid:
+                messagebox.showinfo("Success", "INI content is valid!")
+                self.status_label.config(text="INI content is valid")
+            else:
+                messagebox.showerror("Error", "INI content is invalid!")
+                self.status_label.config(text="Invalid INI content")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while validating the content: {e}")
+            self.status_label.config(text="Error validating content")
+
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = ThemedTk(theme="arc")  # Changed to ThemedTk and set theme here
     app = INIEditor(root)
     root.mainloop()

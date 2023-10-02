@@ -1,0 +1,4 @@
+{
+    "python.analysis.extraPaths": ["Z:/INI-Mod"],
+    "python.autoComplete.extraPaths": ["Z:/INI-Mod/INI-Mod"]
+}
