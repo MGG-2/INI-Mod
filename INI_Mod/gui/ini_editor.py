@@ -36,7 +36,7 @@ class INIEditor:
         menubar.add_cascade(label='Validate', menu=validate_menu)
 
         # Create a context menu
-        self.context_menu = tk.Menu(self.root, tearoff=0)
+        self.context_menu = tk.Menu(self.master, tearoff=0)
         self.context_menu.add_command(label="Copy", command=self.copy_text)
         self.ini_text.bind("<Button-3>", self.show_context_menu)
 
@@ -91,8 +91,8 @@ class INIEditor:
 
     def copy_text(self):
         selected_text = self.ini_text.get(tk.SEL_FIRST, tk.SEL_LAST)
-        self.root.clipboard_clear()
-        self.root.clipboard_append(selected_text)
+        self.master.clipboard_clear()
+        self.master.clipboard_append(selected_text)
 
     def show_context_menu(self, event):
         self.context_menu.post(event.x_root, event.y_root)
