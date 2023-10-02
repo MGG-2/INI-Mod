@@ -1,8 +1,8 @@
 import tkinter as tk
+from ttkthemes import ThemedTk
 from tkinter import filedialog, messagebox  # Added missing imports
 from INI_Mod.gui.syntax_highlighter import SyntaxHighlighter
 from INI_Mod.utils.ini_parser import IniParser
-from ttkthemes import ThemedTk
 
 class INIEditor:
     def __init__(self, master):
