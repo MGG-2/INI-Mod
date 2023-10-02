@@ -1,6 +1,3 @@
-import sys
-sys.path.append('Z:/INI-Mod')
-print(sys.path)  # Add this line to print out sys.path for debugging
 import unittest
 import tkinter as tk
 from unittest.mock import patch

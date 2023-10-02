@@ -1,19 +1,19 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox  # Added missing imports
-from .syntax_highlighter import SyntaxHighlighter
-from utils.ini_parser import IniParser
+from INI_Mod.gui.syntax_highlighter import SyntaxHighlighter
+from INI_Mod.utils.ini_parser import IniParser
 from ttkthemes import ThemedTk
 
 class INIEditor:
     def __init__(self, master):
-        self.master = master  # Fixed undefined variable issue
+        self.master = master
         self.master.title("INI File Editor")
         
-        self.ini_text = tk.Text(root, wrap=tk.WORD)
+        self.ini_text = tk.Text(self.master, wrap=tk.WORD)
         self.ini_text.pack(fill=tk.BOTH, expand=True)
 
         # Change the theme
-        self.theme = ThemedTk(theme="arc")  # You can change "arc" to any other available theme
+        self.theme = ThemedTk(theme="arc")
 
         # Creating a menu bar
         menubar = tk.Menu(master)
@@ -27,7 +27,7 @@ class INIEditor:
         file_menu.add_command(label='Open', command=self.open_file_dialog)
         file_menu.add_command(label='Save', command=self.save_file_dialog)
         file_menu.add_separator()
-        file_menu.add_command(label='Exit', command=master.destroy)
+        file_menu.add_command(label='Exit', command=self.master.destroy)
         menubar.add_cascade(label='File', menu=file_menu)
 
         # Creating a validate menu
@@ -41,22 +41,22 @@ class INIEditor:
         self.ini_text.bind("<Button-3>", self.show_context_menu)
 
         # Create Undo and Redo buttons
-        self.undo_button = tk.Button(root, text="Undo", command=self.undo)
+        self.undo_button = tk.Button(self.master, text="Undo", command=self.undo)
         self.undo_button.pack(side=tk.LEFT, padx=5)
-        self.redo_button = tk.Button(root, text="Redo", command=self.redo)
+        self.redo_button = tk.Button(self.master, text="Redo", command=self.redo)
         self.redo_button.pack(side=tk.LEFT, padx=5)
 
         # Create a Syntax Highlighting toggle button
         self.syntax_highlighting_enabled = tk.BooleanVar(value=True)
-        self.highlighting_button = tk.Checkbutton(root, text="Enable Syntax Highlighting",
+        self.highlighting_button = tk.Checkbutton(self.master, text="Enable Syntax Highlighting",
         variable=self.syntax_highlighting_enabled, command=self.toggle_syntax_highlighting)
         self.highlighting_button.pack()
 
         # Create a text widget to display INI content
-        self.ini_text = tk.Text(self.master, wrap=tk.WORD)  # Fixed undefined variable issue
+        self.ini_text = tk.Text(self.master, wrap=tk.WORD)
         self.ini_text.pack(fill=tk.BOTH, expand=True)
         
-        self.highlighter = SyntaxHighlighter(self.ini_text)  # Fixed reference to self.tab1
+        self.highlighter = SyntaxHighlighter(self.ini_text)
     def open_ini_file(self, file_path):
         with open(file_path, 'r') as file:
             content = file.read()
