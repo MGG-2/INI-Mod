@@ -8,9 +8,8 @@ from pygments.styles import get_all_styles
 class SyntaxHighlighter:
     def __init__(self, frame):
         self.frame = frame
-        self.text_widget = scrolledtext.ScrolledText(self.frame, wrap=tk.WORD)
+        self.text_widget = tk.Text(self.frame, wrap=tk.WORD, bg='#2e2e2e', fg='#ffffff', insertbackground='white')
         self.text_widget.pack(fill=tk.BOTH, expand=True)
-        self.text_widget.config(bg='#2e2e2e', fg='white', insertbackground='white')  # Set dark background and white text
 
         # Adding a dropdown menu for selecting syntax highlighting themes
         self.style_var = StringVar()
@@ -27,4 +26,4 @@ class SyntaxHighlighter:
         highlighted_content = highlight(ini_content, IniLexer(), formatter)
         self.text_widget.delete(1.0, tk.END)
         self.text_widget.insert(tk.INSERT, highlighted_content)
-        self.text_widget.tag_config('Token.Name', foreground='#FFD700')  # Example of setting color for a specific token
+        self.text_widget.tag_config('Token.Name', foreground='#FFD700')

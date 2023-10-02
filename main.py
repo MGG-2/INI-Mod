@@ -3,11 +3,13 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from ttkthemes import ThemedTk
 from INI_Mod.gui.ini_editor import INIEditor
-import traceback  # Import the traceback module
+import traceback
+
 
 def main(file_path=None):
     try:
-        root = ThemedTk(theme="yaru")  # Changed to a dark theme
+        root = ThemedTk(theme="equilux")  # Changed the theme to "equilux"
+        root.geometry('800x600')
         ini_editor = INIEditor(root)
 
         if file_path:
@@ -18,9 +20,9 @@ def main(file_path=None):
 
         root.mainloop()
     except Exception as e:
-        error_message = f"An error occurred: {e}\n{traceback.format_exc()}"  # Print the full traceback
-        print(error_message)  # Print error to the console
-        messagebox.showerror("Error", error_message)  # Show error in a messagebox
+        error_message = f"An error occurred: {e}\n{traceback.format_exc()}"
+        print(error_message)
+        messagebox.showerror("Error", error_message)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='INI File Editor')
