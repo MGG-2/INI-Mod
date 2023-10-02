@@ -1,8 +1,8 @@
 import tkinter as tk
-from tkinter import scrolledtext, OptionMenu, StringVar
+from tkinter import OptionMenu, StringVar
 from pygments import highlight
 from pygments.lexers import IniLexer
-from pygments.formatters import HtmlFormatter
+from pygments.formatters import TerminalFormatter  # Changed to TerminalFormatter for compatibility
 from pygments.styles import get_all_styles
 
 class SyntaxHighlighter:
@@ -22,8 +22,28 @@ class SyntaxHighlighter:
     def apply_syntax_highlighting(self, *args):
         ini_content = self.text_widget.get(1.0, tk.END)
         selected_style = self.style_var.get()
-        formatter = HtmlFormatter(style=selected_style)
+        formatter = TerminalFormatter(style=selected_style)  # Changed to TerminalFormatter for compatibility
         highlighted_content = highlight(ini_content, IniLexer(), formatter)
         self.text_widget.delete(1.0, tk.END)
         self.text_widget.insert(tk.INSERT, highlighted_content)
-        self.text_widget.tag_config('Token.Name', foreground='#FFD700')
+
+        # Customizing the syntax highlighting styles
+        self.text_widget.tag_configure("section", foreground="orange", font=("Arial", 12, "bold"))
+        self.text_widget.tag_configure("key", foreground="white")
+        self.text_widget.tag_configure("value", foreground="cyan")
+
+        # Applying the syntax highlighting
+        content = self.text_widget.get("1.0", tk.END)
+        self.text_widget.delete("1.0", tk.END)
+
+        for line in content.split("\n"):
+            if line.strip().startswith("[") and line.strip().endswith("]"):
+                self.text_widget.insert(tk.INSERT, line + "\n", "section")
+            else:
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    self.text_widget.insert(tk.INSERT, key, "key")
+                    self.text_widget.insert(tk.INSERT, "=")
+                    self.text_widget.insert(tk.INSERT, value + "\n", "value")
+                else:
+                    self.text_widget.insert(tk.INSERT, line + "\n")
