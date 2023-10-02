@@ -1,43 +1,34 @@
-import importlib.util
 import os
+import importlib.util
 import logging
 
 logging.basicConfig(level=logging.INFO)
 
 class PluginManager:
-    def __init__(self):
-        self.plugins = []
+    def __init__(self, plugin_folder):
+        self.plugin_folder = plugin_folder
+        self.plugins = {}
+        self.active_plugins = set()
 
-    def load_plugins(self, directory):
-        if not os.path.exists(directory):
-            logging.error(f"The directory {directory} does not exist.")
-            return
+    def load_plugins(self):
+        for filename in os.listdir(self.plugin_folder):
+            if filename.endswith('.py'):
+                try:
+                    spec = importlib.util.spec_from_file_location(
+                        filename[:-3], os.path.join(self.plugin_folder, filename))
+                    plugin = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(plugin)
+                    self.plugins[filename[:-3]] = plugin
+                    logging.info(f"Plugin {filename[:-3]} loaded successfully.")
+                except Exception as e:
+                    logging.error(f"Error loading plugin {filename[:-3]}: {e}")
 
-        try:
-            for filename in os.listdir(directory):
-                if filename.endswith(".py"):
-                    file_path = os.path.join(directory, filename)
-                    spec = importlib.util.spec_from_file_location("module.name", file_path)
-                    module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(module)
-                    
-                    if hasattr(module, 'execute'):  # Validate that the plugin has an execute method
-                        self.plugins.append(module)
-                        logging.info(f"Loaded plugin: {filename}")
-                    else:
-                        logging.warning(f"{filename} does not have an execute method and is not considered a valid plugin.")
-            logging.info(f"Total plugins loaded: {len(self.plugins)}")
-        except Exception as e:
-            logging.error(f"Error loading plugins: {e}")
+    def activate_plugin(self, plugin_name):
+        if plugin_name in self.plugins and plugin_name not in self.active_plugins:
+            self.active_plugins.add(plugin_name)
+            logging.info(f"Plugin {plugin_name} activated.")
 
-    def execute_plugins(self, *args, **kwargs):
-        if not self.plugins:
-            logging.warning("No plugins to execute.")
-            return
-
-        try:
-            for plugin in self.plugins:
-                plugin.execute(*args, **kwargs)
-                logging.info(f"Executed plugin: {plugin.__name__}")
-        except Exception as e:
-            logging.error(f"Error executing plugins: {e}")
+    def deactivate_plugin(self, plugin_name):
+        if plugin_name in self.active_plugins:
+            self.active_plugins.remove(plugin_name)
+            logging.info(f"Plugin {plugin_name} deactivated.")

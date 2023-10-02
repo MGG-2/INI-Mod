@@ -17,20 +17,35 @@ class IniParser:
             return None
     
     def validate_ini(self, ini_content):
+        errors = []
         try:
             self.config.read_string(ini_content)
             if not self.config.sections():
-                logging.warning("Invalid INI content: No sections found.")
-                return False
-
-            # Example of enhanced validation
+                errors.append("No sections found.")
+            
             for section in self.config.sections():
                 if not self.config.options(section):
-                    logging.warning(f"Section {section} has no keys.")
-                    return False
+                    errors.append(f"Section {section} has no keys.")
+            
+            if errors:
+                logging.warning("Invalid INI content:")
+                for error in errors:
+                    logging.warning(f"- {error}")
+                return False, errors
             
             logging.info("INI content is valid.")
-            return True
+            return True, []
         except configparser.Error as e:
             logging.error(f"Error validating INI content: {e}")
-            return False
+            errors.append(str(e))
+            return False, errors
+    
+    def auto_fix(self, ini_content):
+        fixed_content = ini_content.strip()
+        if not fixed_content:
+            return "[default]\n"
+
+        if not fixed_content.startswith('['):
+            fixed_content = "[default]\n" + fixed_content
+
+        return fixed_content
