@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import filedialog
 import customtkinter
+from customtkinter.windows.widgets.ctk_switch import CTkSwitch  # Import the CTkSwitch class
 from INI_Mod.gui.syntax_highlighter import SyntaxHighlighter
 from INI_Mod.utils.ini_parser import IniParser
 
@@ -69,15 +70,15 @@ class INIEditor(customtkinter.CTk):
         if file_path:
             with open(file_path, 'r') as file:
                 ini_content = file.read()
-
+    
             self.create_textbox()  # Create the textbox when the file is opened
             self.textbox.configure(state=tk.NORMAL)
             self.textbox.delete("1.0", tk.END)
-
+    
             special_sections = {}
             current_section = None
             MAX_OPTIONS_FOR_REGULAR_SECTION = 5
-
+    
             for line in ini_content.splitlines():
                 if line.strip().startswith('[') and line.strip().endswith(']'):
                     if current_section and len(special_sections.get(current_section, [])) > MAX_OPTIONS_FOR_REGULAR_SECTION:
@@ -86,15 +87,15 @@ class INIEditor(customtkinter.CTk):
                                                          command=lambda c=special_sections[current_section][:]: self.display_special_content(c))
                         button.pack(padx=20, pady=10, fill="x")
                         current_section = None
-
+    
                     current_section = line.strip()[1:-1]
                     special_sections[current_section] = []
-
+    
                 elif current_section:
                     special_sections[current_section].append(line)
-                else:
+                elif line.strip() and line.strip() not in [item for sublist in special_sections.values() for item in sublist]:
                     self.textbox.insert(tk.INSERT, line + '\n')
-
+    
             self.textbox.configure(state=tk.DISABLED)
             self.parser.parse_ini(ini_content)
 
@@ -105,54 +106,72 @@ class INIEditor(customtkinter.CTk):
                 content = self.textbox.get("1.0", tk.END)
                 file.write(content)
             print(f"File saved to {file_path}")
+ 
+    def update_textbox_content(self, option, new_value):
+        content = self.textbox.get("1.0", tk.END).splitlines()
+        updated_content = []
+        for line in content:
+            if line.strip().startswith(option):
+                line = f"{option} = {new_value}"
+            updated_content.append(line)
+
+        self.textbox.configure(state=tk.NORMAL)
+        self.textbox.delete("1.0", tk.END)
+        self.textbox.insert(tk.INSERT, '\n'.join(updated_content))
+        self.textbox.configure(state=tk.DISABLED)
+               
+    def switch_get(self, option, switch):
+        value = switch.get()
+        content = self.textbox.get("1.0", tk.END).splitlines()
+    
+    # Determine the current value type (integer or boolean)
+        is_boolean = None
+        for line in content:
+            if line.strip().startswith(option):
+                is_boolean = 'true' in line.lower() or 'false' in line.lower()
+                break
             
+        if is_boolean is None:
+            print(f"Option {option} not found in content.")
+            return
+    
+        if is_boolean:
+            new_value = 'True' if value else 'False'
+        else:
+            new_value = '1' if value else '0'
+    
+        self.update_textbox_content(option, new_value)
+        print(f"Updated {option} to {new_value}")  # For testing purposes, you should replace this with actual code to update the .ini file
+
     def display_special_content(self, content):
         if self.switch_frame:
             self.switch_frame.destroy()
-    
+
         self.switch_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.switch_frame.grid(row=0, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
         self.switch_frame.grid_columnconfigure(0, weight=1)
-    
+
         self.textbox.configure(state=tk.NORMAL)
         self.textbox.delete("1.0", tk.END)
         self.textbox.insert(tk.INSERT, '\n'.join(content))
         self.textbox.configure(state=tk.DISABLED)
-    
+
         for i, line in enumerate(content):
             if '=' in line:
                 option, value = line.split('=')
                 option = option.strip()
-                value = value.strip().lower()  # Convert value to lowercase for case-insensitive comparison
-    
-                switch = customtkinter.CTkSwitch(self.switch_frame)
+                value = value.strip().lower()
+
+                switch = CTkSwitch(self.switch_frame)
                 switch.grid(row=i, column=0, padx=20, pady=5, sticky="w")
-    
-                # Handle boolean strings separately
-                if value == 'true':
-                    switch.is_on = True
-                elif value == 'false':
-                    switch.is_on = False
-                else:
-                    switch.is_on = bool(int(value))
-    
-                switch.bind("<ButtonRelease-1>", lambda event, opt=option: self.update_option_value(opt, switch.is_on))
 
+                if value in ['true', '1']:
+                    switch.get()
+                elif value in ['false', '0']:
+                    switch.get()
 
-    def update_option_value(self, option, is_on):
-        value = '1' if is_on else '0'
-        # Here, you need to update the .ini file with the new value
-        # You can use the self.parser object to update the .ini file
-        print(f"Updated {option} to {value}")  # For testing purposes
-
-
-    def update_switch(self, section, option, value):
-       if self.parser.update_ini_option(section, option, str(value)):
-        ini_content = self.parser.get_ini_content()
-        self.textbox.configure(state=tk.NORMAL)
-        self.textbox.delete("1.0", tk.END)
-        self.textbox.insert(tk.END, ini_content)
-        self.textbox.configure(state=tk.DISABLED)
+                switch.bind("<ButtonRelease-1>", lambda e, opt=option, s=switch: self.switch_get(opt, s))
+                
 
 if __name__ == "__main__":
     editor = INIEditor()
