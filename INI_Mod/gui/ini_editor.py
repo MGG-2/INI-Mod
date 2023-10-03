@@ -70,16 +70,23 @@ class INIEditor(customtkinter.CTk):
         if file_path:
             with open(file_path, 'r') as file:
                 ini_content = file.read()
-    
+
             self.create_textbox()  # Create the textbox when the file is opened
             self.textbox.configure(state=tk.NORMAL)
             self.textbox.delete("1.0", tk.END)
-    
+
             special_sections = {}
             current_section = None
             MAX_OPTIONS_FOR_REGULAR_SECTION = 5
-    
+            processed_cvars = set()
+
             for line in ini_content.splitlines():
+                if '=' in line:
+                    cvar = line.split('=')[0].strip()
+                    if cvar in processed_cvars:
+                        continue  # Skip the duplicated cvar
+                    processed_cvars.add(cvar)
+
                 if line.strip().startswith('[') and line.strip().endswith(']'):
                     if current_section and len(special_sections.get(current_section, [])) > MAX_OPTIONS_FOR_REGULAR_SECTION:
                         button_text = current_section.split('/')[-1].replace('script/', '').replace('.', ' ').title()
@@ -87,15 +94,16 @@ class INIEditor(customtkinter.CTk):
                                                          command=lambda c=special_sections[current_section][:]: self.display_special_content(c))
                         button.pack(padx=20, pady=10, fill="x")
                         current_section = None
-    
+
                     current_section = line.strip()[1:-1]
                     special_sections[current_section] = []
-    
+
                 elif current_section:
                     special_sections[current_section].append(line)
-                elif line.strip() and line.strip() not in [item for sublist in special_sections.values() for item in sublist]:
+
+                else:
                     self.textbox.insert(tk.INSERT, line + '\n')
-    
+
             self.textbox.configure(state=tk.DISABLED)
             self.parser.parse_ini(ini_content)
 
