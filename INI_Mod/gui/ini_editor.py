@@ -109,27 +109,34 @@ class INIEditor(customtkinter.CTk):
     def display_special_content(self, content):
         if self.switch_frame:
             self.switch_frame.destroy()
-
+    
         self.switch_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.switch_frame.grid(row=0, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
         self.switch_frame.grid_columnconfigure(0, weight=1)
-
+    
         self.textbox.configure(state=tk.NORMAL)
         self.textbox.delete("1.0", tk.END)
         self.textbox.insert(tk.INSERT, '\n'.join(content))
         self.textbox.configure(state=tk.DISABLED)
-
+    
         for i, line in enumerate(content):
             if '=' in line:
                 option, value = line.split('=')
                 option = option.strip()
-                value = value.strip()
-
-                switch = customtkinter.CTkSwitch(self.switch_frame)  # Removed unsupported arguments
+                value = value.strip().lower()  # Convert value to lowercase for case-insensitive comparison
+    
+                switch = customtkinter.CTkSwitch(self.switch_frame)
                 switch.grid(row=i, column=0, padx=20, pady=5, sticky="w")
-                switch.set(bool(int(value)))
-
-                switch.bind("<ButtonRelease-1>", lambda event, opt=option: self.update_option_value(opt, switch.is_on()))
+    
+                # Handle boolean strings separately
+                if value == 'true':
+                    switch.is_on = True
+                elif value == 'false':
+                    switch.is_on = False
+                else:
+                    switch.is_on = bool(int(value))
+    
+                switch.bind("<ButtonRelease-1>", lambda event, opt=option: self.update_option_value(opt, switch.is_on))
 
 
     def update_option_value(self, option, is_on):
