@@ -62,7 +62,6 @@ class IgnoreDuplicateConfigParser(configparser.ConfigParser):
                             raise configparser.DuplicateOptionError(sectname, optname, fpname, lineno)
                         elements_added.add((sectname, optname))
                     optname = self.optionxform(optname.rstrip())
-                    # This check is fine because the OPTCRE cannot
                     # match if it would set optval to None
                     if optval is not None:
                         optval = optval.strip()
