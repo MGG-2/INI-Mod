@@ -10,7 +10,7 @@ class INIEditor:
         self.master = master
         self.master.title("INI-Mod Editor")
         self.master.geometry("800x600")
-        self.master.configure(bg="#1f1f1f")
+        self.master.configure(bg="#2e2e2e")
     
         self.frame = ttk.Frame(self.master)  # Create the frame here
         self.frame.pack(fill=tk.BOTH, expand=True)
@@ -51,6 +51,7 @@ class INIEditor:
 
         self.status_label = ttk.Label(self.frame, text="Line 1, Column 1", anchor=tk.W, font=("Arial", 10))
         self.status_label.pack(fill=tk.BOTH, side=tk.BOTTOM, padx=5, pady=5)
+        self.status_label.config(bg='#2e2e2e', fg='#ffffff')
 
         self.line_numbers = tk.Text(
             self.frame, width=5, bg="#1f1f1f", fg="#ffffff", state="disabled", bd=0, highlightthickness=0
@@ -63,6 +64,7 @@ class INIEditor:
 
         # Configure the appearance of the main text editor
         self.ini_text.configure(font=("Courier New", 12), insertbackground="white")
+        self.ini_text.configure(bg='#2e2e2e', fg='#ffffff', insertbackground='white')
         self.ini_text.config(selectbackground="blue", selectforeground="white")
         
 
@@ -70,6 +72,9 @@ class INIEditor:
         # Modify the appearance of widgets, if needed
         self.status_label = ttk.Label(self.frame, text="Welcome to INI-Mod", anchor=tk.W, font=("Arial", 14, "bold"))
         self.status_label.pack(fill=tk.BOTH)
+        self.status_label.config(font=("Arial", 12, "bold"))
+
+        self.ini_text.bind("<Motion>", self.update_status_bar)
 
         self.toolbar = ttk.Frame(self.frame)
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
@@ -84,8 +89,6 @@ class INIEditor:
             )
             button.pack(side=tk.LEFT, padx=10)
 
-        self.status_label.config(font=("Arial", 12, "bold"))
-        self.ini_text.bind("<Motion>", self.update_status_bar)
 
     def add_tooltip(self, widget, text):
         """
@@ -127,12 +130,17 @@ class INIEditor:
         menubar.add_cascade(label='Validate', menu=validate_menu)
 
     def update_line_numbers(self, event=None):
-        # Enhanced line number update function
+        """
+        Update the line numbers display.
+        """
         self.line_numbers.config(state="normal")
         self.line_numbers.delete("1.0", tk.END)
-        total_lines = self.ini_text.index("@%d,%d" % (self.master.winfo_width(), self.master.winfo_height())).split('.')[0]
-        line_numbers = "\n".join(str(no) for no in range(1, int(total_lines) + 1))
+
+        total_lines = int(self.ini_text.index(tk.END).split('.')[0])
+
+        line_numbers = "\n".join(str(no) for no in range(1, total_lines))
         self.line_numbers.insert("1.0", line_numbers)
+
         self.line_numbers.config(state="disabled")
 
     def update_status_bar(self, event=None):
@@ -145,13 +153,14 @@ class INIEditor:
         self.status_label.config(text="New file")
 
     def validate_content(self):
-        is_valid = self.ini_parser.validate_ini(self.ini_text.get("1.0", tk.END))
+        is_valid, errors = self.ini_parser.validate_ini(self.ini_text.get("1.0", tk.END))
         if is_valid:
             messagebox.showinfo("Success", "INI content is valid!")
             self.status_label.config(text="INI content is valid")
         else:
             messagebox.showerror("Error", "INI content is invalid!")
             self.status_label.config(text="Invalid INI content")
+            self.highlight_errors(errors)
 
     def open_file_dialog(self):
         file_path = filedialog.askopenfilename()
@@ -203,6 +212,65 @@ class INIEditor:
             updated_content = content.replace(search_for, replace_with)
             self.ini_text.delete("1.0", tk.END)
             self.ini_text.insert(tk.INSERT, updated_content)
+
+    def highlight_errors(self, errors):
+        """
+        Highlight the lines that contain errors in the INI content.
+
+        :param errors: A list of error messages with line numbers.
+        """
+        self.ini_text.tag_config('error', background='red', foreground='white')
+    
+        for error in errors:
+            line = error.get('line')
+            self.ini_text.tag_add('error', f"{line}.0", f"{line}.end")
+
+class INIEditor(tk.Tk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("INI-Mod Editor")
+        self.geometry("1200x800")
+        self.configure(bg="#2e2e2e")
+
+        self.create_file_explorer()
+        self.create_notebook()
+        self.create_status_bar()
+
+    def create_file_explorer(self):
+        self.file_explorer = ttk.Treeview(self)
+        self.file_explorer.pack(side=tk.LEFT, fill=tk.Y)
+
+        # Populate the file explorer with files and directories
+        # This is just a placeholder; you should add a method to populate it dynamically
+        self.file_explorer.insert("", "end", text="File Explorer", open=True)
+
+    def create_notebook(self):
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
+
+        # Example of adding a new tab
+        tab1 = tk.Text(self.notebook, bg="#2e2e2e", fg="#ffffff")
+        self.notebook.add(tab1, text="Untitled")
+
+    def create_status_bar(self):
+        self.status_bar = ttk.Label(self, text="Ready", anchor=tk.W, font=("Arial", 10))
+        self.status_bar.pack(fill=tk.BOTH, side=tk.BOTTOM, padx=5, pady=5)
+        self.status_bar.config(bg='#2e2e2e', fg='#ffffff')
+
+    def open_file(self):
+        file_path = filedialog.askopenfilename()
+        if file_path:
+            with open(file_path, 'r') as file:
+                content = file.read()
+
+                # Create a new tab for the opened file
+                tab = tk.Text(self.notebook, bg="#2e2e2e", fg="#ffffff")
+                tab.insert(tk.END, content)
+                self.notebook.add(tab, text=os.path.basename(file_path))
+
+                # Update the status bar
+                self.status_bar.config(text=file_path)
 
 class CreateToolTip(object):
     """
