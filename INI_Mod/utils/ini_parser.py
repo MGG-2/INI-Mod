@@ -1,11 +1,92 @@
 import configparser
 import logging
+import re
 
 logging.basicConfig(level=logging.INFO)
+
+class IgnoreDuplicateConfigParser(configparser.ConfigParser):
+    def __init__(self, *args, **kwargs):
+        super(IgnoreDuplicateConfigParser, self).__init__(*args, **kwargs)
+        self.optionxform = str  # make option names case sensitive
+
+    def _read(self, fp, fpname):
+        elements_added = set()
+        cursect = None
+        optname = None
+        lineno = 0
+        e = None
+        optcre = re.compile(
+            r'(?P<option>[^:=\s][^:=]*)'
+            r'\s*(?P<vi>[:=])\s*'
+            r'(?P<value>.*)$'
+        )
+        for lineno, line in enumerate(fp, start=1):
+            if not line.strip():
+                continue
+            # comment or blank line?
+            if line.strip().startswith('#') or line.strip().startswith(';'):
+                continue
+            if line.startswith('['):
+                if line[line.find('[') + 1:].startswith('['):
+                    raise ValueError("Invalid section name format at line %s" % lineno)
+                sectname = line.split('[', 1)[1].split(']', 1)[0]
+                if sectname in self._sections:
+                    if self._strict and sectname in elements_added:
+                        raise configparser.DuplicateSectionError(sectname, fpname, lineno)
+                    cursect = self._sections[sectname]
+                    elements_added.add(sectname)
+                elif sectname == configparser.DEFAULTSECT:
+                    cursect = self._defaults
+                else:
+                    cursect = self._dict()
+                    cursect['__name__'] = sectname
+                    self._sections[sectname] = cursect
+                    self._proxies[sectname] = configparser.SectionProxy(self, sectname)
+                    elements_added.add(sectname)
+                # So sections can't start with a continuation line
+                optname = None
+            # option line?
+            elif cursect is not None:
+                mo = optcre.match(line)
+                if mo:
+                    optname, vi, optval = mo.group('option', 'vi', 'value')
+                    if optname in cursect and (sectname, optname) in elements_added:
+                        continue  # Ignore the duplicated option
+                    if not optname:
+                        if line.strip().startswith(('=', ':')):
+                            raise ValueError("Option name is required at line %s" % lineno)
+                        else:
+                            e = self._handle_error(e, fpname, lineno, line)
+                    elif optname in cursect:
+                        if self._strict and (sectname, optname) in elements_added:
+                            raise configparser.DuplicateOptionError(sectname, optname, fpname, lineno)
+                        elements_added.add((sectname, optname))
+                    optname = self.optionxform(optname.rstrip())
+                    # This check is fine because the OPTCRE cannot
+                    # match if it would set optval to None
+                    if optval is not None:
+                        optval = optval.strip()
+                        # Check if this optname already exists
+                        if optname in cursect:
+                            # If overwriting is allowed, overwrite
+                            if self._allow_no_value:
+                                cursect[optname] = optval
+                            # Otherwise raise an error
+                            else:
+                                raise configparser.DuplicateOptionError(sectname, optname, fpname, lineno)
+                        else:
+                            cursect[optname] = optval
+                    else:
+                        # valueless option handling
+                        cursect[optname] = None
+        # if any parsing errors occurred, raise an exception
+        if e:
+            raise e
 
 class IniParser:
     def __init__(self):
         self.config = configparser.ConfigParser()
+        self.config = IgnoreDuplicateConfigParser(interpolation=None)  # Disable interpolation
     
     def parse_ini(self, ini_content):
         try:
@@ -49,3 +130,36 @@ class IniParser:
             fixed_content = "[default]\n" + fixed_content
 
         return fixed_content
+
+    def get_sections_and_options(self):
+        """
+        Retrieve the sections and options from the parsed INI content.
+
+        Returns:
+            A dictionary where keys are section names and values are dictionaries of options and their values.
+        """
+        sections_and_options = {}
+        for section in self.config.sections():
+            options = {option: self.config.get(section, option) for option in self.config.options(section)}
+            sections_and_options[section] = options
+
+        return sections_and_options
+
+    def update_ini_option(self, section, option, value):
+        try:
+            self.config.set(section, option, value)
+            return True
+        except configparser.Error as e:
+            logging.error(f"Error updating INI option: {e}")
+            return False
+
+    def get_ini_content(self):
+        ini_content = ""
+        for section in self.config.sections():
+            ini_content += f"[{section}]\n"
+            for option in self.config.options(section):
+                ini_content += f"{option} = {self.config.get(section, option)}\n"
+            ini_content += "\n"
+        return ini_content
+    
+    
