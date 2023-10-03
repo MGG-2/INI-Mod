@@ -1,9 +1,9 @@
 import tkinter as tk
-from tkinter import OptionMenu, StringVar
 from pygments import highlight
 from pygments.lexers import IniLexer
-from pygments.formatters import TerminalFormatter  # Changed to TerminalFormatter for compatibility
+from pygments.formatters import HtmlFormatter  # Changed to HtmlFormatter for better compatibility
 from pygments.styles import get_all_styles
+import re
 
 class SyntaxHighlighter:
     def __init__(self, frame):
@@ -11,23 +11,19 @@ class SyntaxHighlighter:
         self.text_widget = tk.Text(self.frame, wrap=tk.WORD, bg='#2e2e2e', fg='#ffffff', insertbackground='white')
         self.text_widget.pack(fill=tk.BOTH, expand=True)
 
-        # Adding a dropdown menu for selecting syntax highlighting themes
-        self.style_var = StringVar()
-        self.style_var.set("default")  # default value
-        styles = list(get_all_styles())
-        self.option_menu = OptionMenu(self.frame, self.style_var, *styles)
-        self.option_menu.pack(side=tk.LEFT, padx=5)
-        self.style_var.trace('w', self.apply_syntax_highlighting)
+        self.text_widget.bind("<KeyRelease>", self.on_key_release)
 
-    def apply_syntax_highlighting(self, *args):
+    def on_key_release(self, event=None):
         ini_content = self.text_widget.get(1.0, tk.END)
-        selected_style = self.style_var.get()
-        formatter = TerminalFormatter(style=selected_style)  # Changed to TerminalFormatter for compatibility
-        highlighted_content = highlight(ini_content, IniLexer(), formatter)
-        self.text_widget.delete(1.0, tk.END)
-        self.text_widget.insert(tk.INSERT, highlighted_content)
+        highlighted_content = highlight(ini_content, IniLexer(), HtmlFormatter(style="monokai", nowrap=True))
 
-        # Customizing the syntax highlighting styles
+        # Extracting only the text content from the HTML output
+        text_only = re.sub(r"<[^>]+>", "", highlighted_content)
+
+        self.text_widget.delete(1.0, tk.END)
+        self.text_widget.insert(tk.INSERT, text_only)
+
+        # You can add more custom tags and styles as per your requirements
         self.text_widget.tag_configure("section", foreground="orange", font=("Arial", 12, "bold"))
         self.text_widget.tag_configure("key", foreground="white")
         self.text_widget.tag_configure("value", foreground="cyan")
