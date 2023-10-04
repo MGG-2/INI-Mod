@@ -116,6 +116,7 @@ class INIEditor(customtkinter.CTk):
                     self.parser.parse_ini(ini_content)
                 logging.debug("No file selected.")
 
+
     def save_ini_file(self):
         logging.debug("Saving INI file...")
         file_path = filedialog.asksaveasfilename(defaultextension=".ini", filetypes=[("INI files", "*.ini"), ("All Files", "*.*")])
@@ -135,8 +136,8 @@ class INIEditor(customtkinter.CTk):
         logging.debug(f"Updating textbox content for option {option} to {new_value}")
     
         # Use the new update_ini_option_exact method to update the INI content
-        updated = self.parser.update_ini_option_exact('YourSectionName', option, new_value)  # Replace 'YourSectionName' with the actual section name
-    
+        updated = self.parser.update_ini_option_exact('', option, new_value)
+
         if updated:
             # If the option was updated successfully, refresh the textbox content
             self.textbox.configure(state=tk.NORMAL)

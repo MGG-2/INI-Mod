@@ -181,6 +181,25 @@ class IniParser:
         except configparser.Error as e:
             logging.error(f"Error updating INI option with exact match: {e}")
             return False
+        
+    def update_option_in_all_sections(self, option, new_value):
+        updated_content = []
+        current_section = None
+        
+        for line in self.ini_content.split('\n'):
+            # Identify the section
+            if line.strip().startswith('[') and line.strip().endswith(']'):
+                current_section = line.strip()
+            
+            # Update the option value if it is found in the current section
+            if option in line and current_section:
+                option_name, _ = line.split('=')
+                updated_line = f"{option_name.strip()}={new_value}"
+                updated_content.append(updated_line)
+            else:
+                updated_content.append(line)
+    
+        return '\n'.join(updated_content)
 
     def get_ini_content(self):
         ini_content = ""
