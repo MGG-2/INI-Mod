@@ -150,16 +150,36 @@ class IniParser:
 
         return sections_and_options
 
-    def update_ini_option(self, section, option, value):
-        logging.debug(f"Updating INI option {section}.{option} to {value}")
+    def update_ini_option_exact(self, section, option, value):
+        """
+        Update the INI option ensuring the exact match of the option name.
+
+        Parameters:
+            section (str): The section containing the option to update.
+            option (str): The option name to update.
+            value (str): The new value to set for the option.
+
+        Returns:
+            bool: True if the option was updated successfully, False otherwise.
+        """
+        logging.debug(f"Updating INI option {section}.{option} to {value} with exact match")
         try:
-            self.config.set(section, option, value)
-            logging.debug("Option updated successfully.")
-            logging.debug("Updated INI content:")
-            logging.debug(self.get_ini_content())  # Log the updated content
-            return True
+            if self.config.has_section(section):
+                options = self.config.options(section)
+                if option in options:
+                    self.config.set(section, option, value)
+                    logging.debug("Option updated successfully with exact match.")
+                    logging.debug("Updated INI content:")
+                    logging.debug(self.get_ini_content())  # Log the updated content
+                    return True
+                else:
+                    logging.error(f"Option {option} not found in section {section}.")
+                    return False
+            else:
+                logging.error(f"Section {section} not found.")
+                return False
         except configparser.Error as e:
-            logging.error(f"Error updating INI option: {e}")
+            logging.error(f"Error updating INI option with exact match: {e}")
             return False
 
     def get_ini_content(self):
@@ -170,5 +190,3 @@ class IniParser:
                 ini_content += f"{option} = {self.config.get(section, option)}\n"
             ini_content += "\n"
         return ini_content
-    
-    

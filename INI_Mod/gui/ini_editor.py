@@ -133,18 +133,19 @@ class INIEditor(customtkinter.CTk):
  
     def update_textbox_content(self, option, new_value):
         logging.debug(f"Updating textbox content for option {option} to {new_value}")
-        content = self.textbox.get("1.0", tk.END).splitlines()
-        updated_content = []
-        for line in content:
-            if line.strip().startswith(option):
-                line = f"{option} = {new_value}"
-            updated_content.append(line)
-
-        self.textbox.configure(state=tk.NORMAL)
-        self.textbox.delete("1.0", tk.END)
-        self.textbox.insert(tk.INSERT, '\n'.join(updated_content))
-        self.textbox.configure(state=tk.DISABLED)
-        logging.debug("Textbox content updated.")
+    
+        # Use the new update_ini_option_exact method to update the INI content
+        updated = self.parser.update_ini_option_exact('YourSectionName', option, new_value)  # Replace 'YourSectionName' with the actual section name
+    
+        if updated:
+            # If the option was updated successfully, refresh the textbox content
+            self.textbox.configure(state=tk.NORMAL)
+            self.textbox.delete("1.0", tk.END)
+            self.textbox.insert(tk.INSERT, self.parser.get_ini_content())
+            self.textbox.configure(state=tk.DISABLED)
+            logging.debug("Textbox content updated.")
+        else:
+            logging.error(f"Failed to update option {option}.")
                
     def switch_get(self, option, switch):
         logging.debug(f"Switching option {option}")
@@ -178,7 +179,7 @@ class INIEditor(customtkinter.CTk):
         updated_content = self.textbox.get("1.0", tk.END)
         logging.debug("Content after switch:")
         logging.debug(updated_content)
-        
+
     def display_special_content(self, content):
         if self.switch_frame:
             self.switch_frame.destroy()
