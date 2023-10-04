@@ -3,8 +3,13 @@ import tkinter as tk
 from tkinter import filedialog
 import customtkinter
 from customtkinter.windows.widgets.ctk_switch import CTkSwitch  # Import the CTkSwitch class
-from INI_Mod.gui.syntax_highlighter import SyntaxHighlighter
+#from INI_Mod.gui.syntax_highlighter import SyntaxHighlighter
 from INI_Mod.utils.ini_parser import IniParser
+
+import logging
+
+logging.basicConfig(level=logging.DEBUG)  # Set logging level to DEBUG
+
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -66,10 +71,14 @@ class INIEditor(customtkinter.CTk):
             self.textbox.configure(state=tk.DISABLED)
 
     def open_ini_file(self):
+        logging.debug("Opening INI file...")
         file_path = filedialog.askopenfilename(defaultextension=".ini", filetypes=[("INI files", "*.ini"), ("All Files", "*.*")])
         if file_path:
+            logging.debug(f"File selected: {file_path}")
             with open(file_path, 'r') as file:
                 ini_content = file.read()
+                logging.debug("INI content loaded:")
+                logging.debug(ini_content)
 
             self.create_textbox()  # Create the textbox when the file is opened
             self.textbox.configure(state=tk.NORMAL)
@@ -103,19 +112,27 @@ class INIEditor(customtkinter.CTk):
 
                 else:
                     self.textbox.insert(tk.INSERT, line + '\n')
-
-            self.textbox.configure(state=tk.DISABLED)
-            self.parser.parse_ini(ini_content)
+                    self.textbox.configure(state=tk.DISABLED)
+                    self.parser.parse_ini(ini_content)
+                logging.debug("No file selected.")
 
     def save_ini_file(self):
+        logging.debug("Saving INI file...")
         file_path = filedialog.asksaveasfilename(defaultextension=".ini", filetypes=[("INI files", "*.ini"), ("All Files", "*.*")])
         if file_path:
+            logging.debug(f"File will be saved to: {file_path}")
             with open(file_path, 'w') as file:
                 content = self.textbox.get("1.0", tk.END)
                 file.write(content)
+                logging.debug("File saved successfully.")
+                logging.debug("Saved content:")
+                logging.debug(content)
             print(f"File saved to {file_path}")
+        else:
+            logging.debug("Save operation cancelled.")
  
     def update_textbox_content(self, option, new_value):
+        logging.debug(f"Updating textbox content for option {option} to {new_value}")
         content = self.textbox.get("1.0", tk.END).splitlines()
         updated_content = []
         for line in content:
@@ -127,10 +144,16 @@ class INIEditor(customtkinter.CTk):
         self.textbox.delete("1.0", tk.END)
         self.textbox.insert(tk.INSERT, '\n'.join(updated_content))
         self.textbox.configure(state=tk.DISABLED)
+        logging.debug("Textbox content updated.")
                
     def switch_get(self, option, switch):
+        logging.debug(f"Switching option {option}")
         value = switch.get()
         content = self.textbox.get("1.0", tk.END).splitlines()
+
+        # Print the content before the switch for debugging
+        logging.debug("Content before switch:")
+        logging.debug("\n".join(content))
     
     # Determine the current value type (integer or boolean)
         is_boolean = None
@@ -149,8 +172,13 @@ class INIEditor(customtkinter.CTk):
             new_value = '1' if value else '0'
     
         self.update_textbox_content(option, new_value)
-        print(f"Updated {option} to {new_value}")  # For testing purposes, you should replace this with actual code to update the .ini file
+        logging.debug(f"Updated {option} to {new_value}")
 
+        # Print the content after the switch for debugging
+        updated_content = self.textbox.get("1.0", tk.END)
+        logging.debug("Content after switch:")
+        logging.debug(updated_content)
+        
     def display_special_content(self, content):
         if self.switch_frame:
             self.switch_frame.destroy()

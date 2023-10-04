@@ -2,7 +2,7 @@ import configparser
 import logging
 import re
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)  # Changed to DEBUG for more detailed logging
 
 class IgnoreDuplicateConfigParser(configparser.ConfigParser):
     def __init__(self, *args, **kwargs):
@@ -10,6 +10,7 @@ class IgnoreDuplicateConfigParser(configparser.ConfigParser):
         self.optionxform = str  # make option names case sensitive
 
     def _read(self, fp, fpname):
+        logging.debug(f"Starting to read INI content from {fpname}")
         elements_added = set()
         cursect = None
         optname = None
@@ -81,6 +82,7 @@ class IgnoreDuplicateConfigParser(configparser.ConfigParser):
         # if any parsing errors occurred, raise an exception
         if e:
             raise e
+        logging.debug(f"Starting to read INI content from {fpname}")
 
 class IniParser:
     def __init__(self):
@@ -88,9 +90,13 @@ class IniParser:
         self.config = IgnoreDuplicateConfigParser(interpolation=None)  # Disable interpolation
     
     def parse_ini(self, ini_content):
+        logging.debug("Parsing INI content:")
+        logging.debug(ini_content)
         try:
             self.config.read_string(ini_content)
             logging.info("INI content parsed successfully.")
+            logging.debug("Parsed INI content:")
+            logging.debug(self.get_ini_content())  # Log the parsed content
             return self.config
         except configparser.Error as e:
             logging.error(f"Error parsing INI content: {e}")
@@ -145,8 +151,12 @@ class IniParser:
         return sections_and_options
 
     def update_ini_option(self, section, option, value):
+        logging.debug(f"Updating INI option {section}.{option} to {value}")
         try:
             self.config.set(section, option, value)
+            logging.debug("Option updated successfully.")
+            logging.debug("Updated INI content:")
+            logging.debug(self.get_ini_content())  # Log the updated content
             return True
         except configparser.Error as e:
             logging.error(f"Error updating INI option: {e}")
