@@ -133,29 +133,21 @@ class INIEditor(customtkinter.CTk):
             logging.debug("Save operation cancelled.")
  
     def update_textbox_content(self, option, new_value):
-        logging.debug(f"Updating textbox content for option {option} to {new_value}")
-    
-        # Use the new update_ini_option_exact method to update the INI content
-        updated = self.parser.update_ini_option_exact('', option, new_value)
+        content = self.textbox.get("1.0", tk.END).splitlines()
+        updated_content = []
+        for line in content:
+            if line.strip().startswith(option):
+                line = f"{option} = {new_value}"
+            updated_content.append(line)
 
-        if updated:
-            # If the option was updated successfully, refresh the textbox content
-            self.textbox.configure(state=tk.NORMAL)
-            self.textbox.delete("1.0", tk.END)
-            self.textbox.insert(tk.INSERT, self.parser.get_ini_content())
-            self.textbox.configure(state=tk.DISABLED)
-            logging.debug("Textbox content updated.")
-        else:
-            logging.error(f"Failed to update option {option}.")
+        self.textbox.configure(state=tk.NORMAL)
+        self.textbox.delete("1.0", tk.END)
+        self.textbox.insert(tk.INSERT, '\n'.join(updated_content))
+        self.textbox.configure(state=tk.DISABLED)
                
     def switch_get(self, option, switch):
-        logging.debug(f"Switching option {option}")
         value = switch.get()
         content = self.textbox.get("1.0", tk.END).splitlines()
-
-        # Print the content before the switch for debugging
-        logging.debug("Content before switch:")
-        logging.debug("\n".join(content))
     
     # Determine the current value type (integer or boolean)
         is_boolean = None
@@ -174,12 +166,7 @@ class INIEditor(customtkinter.CTk):
             new_value = '1' if value else '0'
     
         self.update_textbox_content(option, new_value)
-        logging.debug(f"Updated {option} to {new_value}")
-
-        # Print the content after the switch for debugging
-        updated_content = self.textbox.get("1.0", tk.END)
-        logging.debug("Content after switch:")
-        logging.debug(updated_content)
+        print(f"Updated {option} to {new_value}")  # For testing purposes, you should replace this with actual code to update the .ini file
 
     def display_special_content(self, content):
         if self.switch_frame:
