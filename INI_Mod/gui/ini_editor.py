@@ -1,19 +1,14 @@
-
 import tkinter as tk
 from tkinter import filedialog
 import customtkinter
-from customtkinter.windows.widgets.ctk_switch import CTkSwitch  # Import the CTkSwitch class
-#from INI_Mod.gui.syntax_highlighter import SyntaxHighlighter
+from customtkinter.windows.widgets.ctk_switch import CTkSwitch
 from INI_Mod.utils.ini_parser import IniParser
-
 import logging
 
-logging.basicConfig(level=logging.DEBUG)  # Set logging level to DEBUG
+logging.basicConfig(level=logging.DEBUG)
 
-
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
-customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
-
+customtkinter.set_appearance_mode("System")
+customtkinter.set_default_color_theme("blue")
 
 class INIEditor(customtkinter.CTk):
     def __init__(self):
@@ -27,6 +22,14 @@ class INIEditor(customtkinter.CTk):
         self.grid_columnconfigure((2, 3), weight=0)
         self.grid_rowconfigure((0, 1, 2), weight=1)
 
+        self.create_sidebar()
+
+        self.textbox = None
+        self.switch_frame = None
+
+        self.create_buttons_frame()
+
+    def create_sidebar(self):
         self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(4, weight=1)
@@ -34,35 +37,14 @@ class INIEditor(customtkinter.CTk):
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="INI EDITOR", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
-        #self.textbox = customtkinter.CTkTextbox(self, width=250)
-        #self.textbox.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
-        #self.textbox.configure(state=tk.DISABLED)
-        self.textbox = None  # Initialize the textbox as None
-        self.switch_frame = None
-
         self.open_file_button = customtkinter.CTkButton(self.sidebar_frame, text="Open INI File", command=self.open_ini_file)
         self.open_file_button.grid(row=1, column=0, padx=20, pady=10)
         self.save_button = customtkinter.CTkButton(self.sidebar_frame, text="Save INI File", command=self.save_ini_file)
         self.save_button.grid(row=2, column=0, padx=20, pady=10)
 
+    def create_buttons_frame(self):
         self.buttons_frame = tk.Frame(self, bg=self.cget('bg'))
         self.buttons_frame.grid(row=1, column=1, sticky="nsew")
-
-    def open_input_dialog_event(self):
-        dialog = customtkinter.CTkInputDialog(text="Type in a number:", title="CTkInputDialog")
-        print("CTkInputDialog:", dialog.get_input())
-
-    def change_appearance_mode_event(self, new_appearance_mode: str):
-        customtkinter.set_appearance_mode(new_appearance_mode)
-
-    def change_scaling_event(self, new_scaling: str):
-        new_scaling_float = int(new_scaling.replace("%", "")) / 100
-        customtkinter.set_widget_scaling(new_scaling_float)
-
-    def sidebar_button_event(self):
-        # For demonstration, I'm using a hardcoded file path; you should implement a file dialog to select the .ini file
-        file_path = 'example.ini'  
-        self.load_ini_file(file_path)
 
     def create_textbox(self):
         if self.textbox is None:
@@ -80,7 +62,7 @@ class INIEditor(customtkinter.CTk):
                 logging.debug("INI content loaded:")
                 logging.debug(ini_content)
 
-            self.create_textbox()  # Create the textbox when the file is opened
+            self.create_textbox()
             self.textbox.configure(state=tk.NORMAL)
             self.textbox.delete("1.0", tk.END)
 
@@ -93,7 +75,7 @@ class INIEditor(customtkinter.CTk):
                 if '=' in line:
                     cvar = line.split('=')[0].strip()
                     if cvar in processed_cvars:
-                        continue  # Skip the duplicated cvar
+                        continue
                     processed_cvars.add(cvar)
 
                 if line.strip().startswith('[') and line.strip().endswith(']'):
@@ -116,7 +98,6 @@ class INIEditor(customtkinter.CTk):
                     self.parser.parse_ini(ini_content)
                 logging.debug("No file selected.")
 
-
     def save_ini_file(self):
         logging.debug("Saving INI file...")
         file_path = filedialog.asksaveasfilename(defaultextension=".ini", filetypes=[("INI files", "*.ini"), ("All Files", "*.*")])
@@ -131,7 +112,7 @@ class INIEditor(customtkinter.CTk):
             print(f"File saved to {file_path}")
         else:
             logging.debug("Save operation cancelled.")
- 
+
     def update_textbox_content(self, option, new_value):
         content = self.textbox.get("1.0", tk.END).splitlines()
         updated_content = []
@@ -144,29 +125,28 @@ class INIEditor(customtkinter.CTk):
         self.textbox.delete("1.0", tk.END)
         self.textbox.insert(tk.INSERT, '\n'.join(updated_content))
         self.textbox.configure(state=tk.DISABLED)
-               
+
     def switch_get(self, option, switch):
         value = switch.get()
         content = self.textbox.get("1.0", tk.END).splitlines()
-    
-    # Determine the current value type (integer or boolean)
+
         is_boolean = None
         for line in content:
             if line.strip().startswith(option):
                 is_boolean = 'true' in line.lower() or 'false' in line.lower()
                 break
-            
+
         if is_boolean is None:
             print(f"Option {option} not found in content.")
             return
-    
+
         if is_boolean:
             new_value = 'True' if value else 'False'
         else:
             new_value = '1' if value else '0'
-    
+
         self.update_textbox_content(option, new_value)
-        print(f"Updated {option} to {new_value}")  # For testing purposes, you should replace this with actual code to update the .ini file
+        print(f"Updated {option} to {new_value}")
 
     def display_special_content(self, content):
         if self.switch_frame:
@@ -196,9 +176,7 @@ class INIEditor(customtkinter.CTk):
                     switch.get()
 
                 switch.bind("<ButtonRelease-1>", lambda e, opt=option, s=switch: self.switch_get(opt, s))
-                
 
 if __name__ == "__main__":
     editor = INIEditor()
     editor.mainloop()
-
