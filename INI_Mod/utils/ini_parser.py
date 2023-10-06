@@ -82,32 +82,32 @@ class IniParser:
 
     def get_category(self, option: str) -> Optional[str]:
         graphics_keywords = [
-            'texturestreaming', 'maxanisotropy', 'streaming.poolsize', 'postprocessaaquality',
-            'motionblurquality', 'depthoffieldquality', 'lensflarequality', 'eyeadaptationquality',
-            'bloomquality', 'materialqualitylevel', 'refractionquality', 'ssr.quality', 'raytracing',
-            'globalillumination', 'tessellation', 'atmosphere', 'skyatmosphere', 'volumetriccloud', 'fog'
+            'r.TextureStreaming', 'r.MaxAnisotropy', 'r.Streaming.PoolSize', 'r.PostProcessAAQuality',
+            'r.MotionBlurQuality', 'r.DepthOfFieldQuality', 'r.LensFlareQuality', 'r.EyeAdaptationQuality',
+            'r.BloomQuality', 'r.MaterialQualityLevel', 'r.RefractionQuality', 'r.SSR.Quality', 'r.RayTracing',
+            'r.GlobalIllumination', 'r.Tessellation', 'r.Atmosphere', 'r.SkyAtmosphere', 'r.VolumetricCloud', 'r.Fog'
         ]
 
-        lighting_settings_keywords = [
-            'shadowquality', 'shadow.csm.maxcascades', 'shadow.radiusthreshold', 'shadow.distancescale',
-            'shadow.csm.transitionscale', 'distancefieldshadowing', 'shadow.maxresolution', 'shadow.maxcsmresolution',
-            'shadow.perobject', 'shadow.fadeexponent', 'shadow.transitionscale', 'lightmaxdrawdistancescale',
-            'capsuledirectshadows', 'capsuleindirectshadows', 'capsulemaxdirectocclusiondistance',
-            'capsulemaxindirectocclusiondistance', 'capsuleshadows', 'lightfunctionquality', 'translucentlightingvolume'
+        lighting_keywords = [
+            'r.ShadowQuality', 'r.Shadow.CSM.MaxCascades', 'r.Shadow.RadiusThreshold', 'r.Shadow.DistanceScale',
+            'r.Shadow.CSM.TransitionScale', 'r.DistanceFieldShadowing', 'r.Shadow.MaxResolution',
+            'r.Shadow.MaxCSMResolution', 'r.Shadow.PerObject', 'r.Shadow.FadeExponent', 'r.Shadow.TransitionScale',
+            'r.LightMaxDrawDistanceScale', 'r.CapsuleDirectShadows', 'r.CapsuleIndirectShadows',
+            'r.CapsuleMaxDirectOcclusionDistance', 'r.CapsuleMaxIndirectOcclusionDistance', 'r.CapsuleShadows',
+            'r.LightFunctionQuality', 'r.TranslucentLightingVolume'
         ]
 
         miscellaneous_keywords = [
-            'oneframethreadlag', 'triangleorderoptimization', 'uniformbufferpooling', 'optimizeforuavperformance',
-            'instanceculling', 'hairstrands.cull', 'hairstrands.binding', 'hairstrands.strands', 'hairstrands.cards',
-            'hairstrands.enable', 'hairstrands.simulation'
+            'r.OneFrameThreadLag', 'r.TriangleOrderOptimization', 'r.UniformBufferPooling', 'r.OptimizeForUAVPerformance',
+            'r.InstanceCulling', 'r.HairStrands.Cull', 'r.HairStrands.Binding', 'r.HairStrands.Strands',
+            'r.HairStrands.Cards', 'r.HairStrands.Enable', 'r.HairStrands.Simulation'
         ]
 
-        option_lower = option.lower()
-        if any(keyword in option_lower for keyword in graphics_keywords):
+        if option in graphics_keywords:
             return 'Graphics'
-        elif any(keyword in option_lower for keyword in lighting_settings_keywords):
+        elif option in lighting_keywords:
             return 'Lighting Settings'
-        elif any(keyword in option_lower for keyword in miscellaneous_keywords):
+        elif option in miscellaneous_keywords:
             return 'Miscellaneous'
         return None
 

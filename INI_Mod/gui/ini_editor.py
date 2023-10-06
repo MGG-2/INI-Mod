@@ -74,36 +74,20 @@ class INIEditor(ctk.CTk):
             'Miscellaneous': []
         }
 
-        # Updated keywords based on the provided .ini file settings
-        graphics_keywords = [
-            'texturestreaming', 'maxanisotropy', 'streaming.poolsize', 'postprocessaaquality',
-            'motionblurquality', 'depthoffieldquality', 'lensflarequality', 'eyeadaptationquality',
-            'bloomquality', 'materialqualitylevel', 'refractionquality', 'ssr.quality', 'raytracing',
-            'globalillumination', 'tessellation', 'atmosphere', 'skyatmosphere', 'volumetriccloud', 'fog'
-        ]
-
-        lighting_settings_keywords = [
-            'shadowquality', 'shadow.csm.maxcascades', 'shadow.radiusthreshold', 'shadow.distancescale',
-            'shadow.csm.transitionscale', 'distancefieldshadowing', 'shadow.maxresolution', 'shadow.maxcsmresolution',
-            'shadow.perobject', 'shadow.fadeexponent', 'shadow.transitionscale', 'lightmaxdrawdistancescale',
-            'capsuledirectshadows', 'capsuleindirectshadows', 'capsulemaxdirectocclusiondistance',
-            'capsulemaxindirectocclusiondistance', 'capsuleshadows', 'lightfunctionquality', 'translucentlightingvolume'
-        ]
-
-        miscellaneous_keywords = [
-            'oneframethreadlag', 'triangleorderoptimization', 'uniformbufferpooling', 'optimizeforuavperformance',
-            'instanceculling', 'hairstrands.cull', 'hairstrands.binding', 'hairstrands.strands', 'hairstrands.cards',
-            'hairstrands.enable', 'hairstrands.simulation'
-        ]
+        # Mapping of settings to their comments
+        comments = {
+            # Add the comments for each setting here, for example:
+            'r.TextureStreaming': 'Disable texture streaming to load all textures at startup',
+            'r.MaxAnisotropy': 'Set the maximum anisotropic filtering level',
+            # ... (add all other settings and their comments)
+        }
 
         for section, options in self.parser.sections.items():
             for option, value in options.items():
-                if any(keyword in option.lower() for keyword in graphics_keywords):
-                    categories['Graphics'].append((section, option, value))
-                elif any(keyword in option.lower() for keyword in lighting_settings_keywords):
-                    categories['Lighting Settings'].append((section, option, value))
-                elif any(keyword in option.lower() for keyword in miscellaneous_keywords):
-                    categories['Miscellaneous'].append((section, option, value))
+                category = self.parser.get_category(option)
+                if category:
+                    comment = comments.get(option, '')  # Get the comment for the setting, if available
+                    categories[category].append((section, option, value, comment))
 
         return categories
 
@@ -115,33 +99,18 @@ class INIEditor(ctk.CTk):
 
             # Create a scrollable frame inside the tab
             scroll_frame = ctk.CTkScrollableFrame(tab, fg_color="transparent")
-            scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)  # Adjust padding as needed
+            scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
             scroll_frame.config(highlightthickness=0)
 
             row = 0
-            for section, option, value in settings:
+            for section, option, value, comment in settings:
                 # Add settings directly to the scrollable frame
                 ctk.CTkLabel(scroll_frame, text=f"{option}").grid(row=row, column=0, sticky="w")
                 entry = ctk.CTkEntry(scroll_frame)
                 entry.insert(0, value)
                 entry.grid(row=row, column=1, sticky="ew")
-
-                # Add comments
-                comment = self.get_comment_for_option(option)
-                if comment:
-                    ctk.CTkLabel(scroll_frame, text=f"({comment})", fg_color="grey").grid(row=row, column=2, sticky="w")
-
+                ctk.CTkLabel(scroll_frame, text=f" {comment}", fg_color="transparent").grid(row=row, column=2, sticky="w")
                 row += 1
-
-    def get_comment_for_option(self, option):
-        # You can expand this dictionary to include comments for more options
-        comments = {
-            'r.DefaultFeature.Bloom': 'Enables or disables the bloom effect.',
-            'r.MobileHDR': 'Toggles high dynamic range for mobile.',
-            # ... add more option-comment pairs as needed
-        }
-
-        return comments.get(option)
 
 
     def save_ini_file(self):
