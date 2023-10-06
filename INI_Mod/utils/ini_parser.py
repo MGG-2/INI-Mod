@@ -1,199 +1,124 @@
 import configparser
 import logging
 import re
+from typing import Dict, Optional, Union
 
-logging.basicConfig(level=logging.DEBUG)  # Changed to DEBUG for more detailed logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 class IgnoreDuplicateConfigParser(configparser.ConfigParser):
     def __init__(self, *args, **kwargs):
-        super(IgnoreDuplicateConfigParser, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.optionxform = str  # make option names case sensitive
 
     def _read(self, fp, fpname):
-        logging.debug(f"Starting to read INI content from {fpname}")
         elements_added = set()
-        cursect = None
-        optname = None
+        cursect = None  # current section
         lineno = 0
-        e = None
+        e = None  # exception
         optcre = re.compile(
             r'(?P<option>[^:=\s][^:=]*)'
             r'\s*(?P<vi>[:=])\s*'
             r'(?P<value>.*)$'
         )
+
         for lineno, line in enumerate(fp, start=1):
-            if not line.strip():
+            if not line.strip() or line.strip().startswith(('#', ';')):
                 continue
-            # comment or blank line?
-            if line.strip().startswith('#') or line.strip().startswith(';'):
-                continue
+
             if line.startswith('['):
-                if line[line.find('[') + 1:].startswith('['):
-                    raise ValueError("Invalid section name format at line %s" % lineno)
-                sectname = line.split('[', 1)[1].split(']', 1)[0]
-                if sectname in self._sections:
-                    if self._strict and sectname in elements_added:
-                        raise configparser.DuplicateSectionError(sectname, fpname, lineno)
-                    cursect = self._sections[sectname]
-                    elements_added.add(sectname)
-                elif sectname == configparser.DEFAULTSECT:
-                    cursect = self._defaults
-                else:
-                    cursect = self._dict()
-                    cursect['__name__'] = sectname
-                    self._sections[sectname] = cursect
-                    self._proxies[sectname] = configparser.SectionProxy(self, sectname)
-                    elements_added.add(sectname)
-                # So sections can't start with a continuation line
+                sectname = line.strip('[]')
+                cursect = self._sections.setdefault(sectname, self._dict())
+                elements_added.add(sectname)
                 optname = None
-            # option line?
             elif cursect is not None:
                 mo = optcre.match(line)
                 if mo:
                     optname, vi, optval = mo.group('option', 'vi', 'value')
-                    if optname in cursect and (sectname, optname) in elements_added:
-                        continue  # Ignore the duplicated option
-                    if not optname:
-                        if line.strip().startswith(('=', ':')):
-                            raise ValueError("Option name is required at line %s" % lineno)
-                        else:
-                            e = self._handle_error(e, fpname, lineno, line)
-                    elif optname in cursect:
-                        if self._strict and (sectname, optname) in elements_added:
-                            raise configparser.DuplicateOptionError(sectname, optname, fpname, lineno)
-                        elements_added.add((sectname, optname))
                     optname = self.optionxform(optname.rstrip())
-                    # match if it would set optval to None
-                    if optval is not None:
-                        optval = optval.strip()
-                        # Check if this optname already exists
-                        if optname in cursect:
-                            # If overwriting is allowed, overwrite
-                            if self._allow_no_value:
-                                cursect[optname] = optval
-                            # Otherwise raise an error
-                            else:
-                                raise configparser.DuplicateOptionError(sectname, optname, fpname, lineno)
-                        else:
-                            cursect[optname] = optval
-                    else:
-                        # valueless option handling
-                        cursect[optname] = None
-        # if any parsing errors occurred, raise an exception
+                    cursect[optname] = optval.strip()
+                    elements_added.add((sectname, optname))
+
         if e:
             raise e
-        logging.debug(f"Starting to read INI content from {fpname}")
+
 
 class IniParser:
     def __init__(self):
-        self.config = configparser.ConfigParser()
         self.config = IgnoreDuplicateConfigParser(interpolation=None)  # Disable interpolation
-    
-    def parse_ini(self, ini_content):
-        logging.debug("Parsing INI content:")
-        logging.debug(ini_content)
+
+    def parse_ini(self, ini_content: str) -> Optional[configparser.ConfigParser]:
+        if not ini_content:
+            logging.error("INI content is empty.")
+            return None
+
         try:
             self.config.read_string(ini_content)
             logging.info("INI content parsed successfully.")
-            logging.debug("Parsed INI content:")
-            logging.debug(self.get_ini_content())  # Log the parsed content
             return self.config
         except configparser.Error as e:
             logging.error(f"Error parsing INI content: {e}")
             return None
-    
-    def validate_ini(self, ini_content):
-        errors = []
-        try:
-            self.config.read_string(ini_content)
-            if not self.config.sections():
-                errors.append("No sections found.")
+
+    def get_sections_and_options(self) -> Dict[str, Dict[str, Union[str, Dict[str, str]]]]:
+        sections_and_options = {section: dict(self.config.items(section)) for section in self.config.sections()}
+        
+        if 'CTkTabview' in sections_and_options:
+            ctk_tabview_options = sections_and_options['CTkTabview']
+            categorized_options = {
+                'Graphics': {},
+                'Shadows': {},
+                'Miscellaneous': {}
+            }
+
+            for option, value in ctk_tabview_options.items():
+                category = self.get_category(option)
+                if category:
+                    categorized_options[category][option] = value
             
-            for section in self.config.sections():
-                if not self.config.options(section):
-                    errors.append(f"Section {section} has no keys.")
-            
-            if errors:
-                logging.warning("Invalid INI content:")
-                for error in errors:
-                    logging.warning(f"- {error}")
-                return False, errors
-            
-            logging.info("INI content is valid.")
-            return True, []
-        except configparser.Error as e:
-            logging.error(f"Error validating INI content: {e}")
-            errors.append(str(e))
-            return False, errors
-    
-    def auto_fix(self, ini_content):
-        fixed_content = ini_content.strip()
-        if not fixed_content:
-            return "[default]\n"
-
-        if not fixed_content.startswith('['):
-            fixed_content = "[default]\n" + fixed_content
-
-        return fixed_content
-
-    def get_sections_and_options(self):
-        """
-        Retrieve the sections and options from the parsed INI content.
-
-        Returns:
-            A dictionary where keys are section names and values are dictionaries of options and their values.
-        """
-        sections_and_options = {}
-        for section in self.config.sections():
-            options = {option: self.config.get(section, option) for option in self.config.options(section)}
-            sections_and_options[section] = options
+            sections_and_options['CTkTabview'] = categorized_options
 
         return sections_and_options
 
-#    def update_ini_option_exact(self, section, option, value):
-#        logging.debug(f"Updating INI option {section}.{option} to {value} with exact match")
-#        try:
-#            print(f"Section being searched: '{section}'")
-#            if self.config.has_section(section):
-#                options = self.config.options(section)
-#                if option in options:
-#                    self.config.set(section, option, value)
-#                    logging.debug("Option updated successfully with exact match.")
-#                    return True
-#                else:
-#                    logging.error(f"Option {option} not found in section {section}.")
-#                    return False
-#            else:
-#                logging.error(f"Section {section} not found.")
-#                return False
-#        except configparser.Error as e:
-#            logging.error(f"Error updating INI option with exact match: {e}")
-#            return False
-        
-    def update_option_in_all_sections(self, option, new_value):
-        updated_content = []
-        current_section = None
-        
-        for line in self.ini_content.split('\n'):
-            # Identify the section
-            if line.strip().startswith('[') and line.strip().endswith(']'):
-                current_section = line.strip()
-            
-            # Update the option value if it is found in the current section
-            if option in line and current_section:
-                option_name, _ = line.split('=')
-                updated_line = f"{option_name.strip()}={new_value}"
-                updated_content.append(updated_line)
-            else:
-                updated_content.append(line)
-    
-        return '\n'.join(updated_content)
+    def get_category(self, option: str) -> Optional[str]:
+        graphics_keywords = ['Bloom', 'HDR', 'Fog', 'Atmosphere', 'LensFlare', 'DepthOfField', 'AmbientOcclusion', 'Quality', 'AntiAliasing', 'Anisotropy', 'SSR']
+        shadows_keywords = ['Shadow']
+        miscellaneous_keywords = ['OneFrameThreadLag', 'TriangleOrderOptimization', 'AllowLandscapeShadows', 'AllowStaticLighting', 'EyeAdaptationQuality', 'IndirectLightingCache', 'LightFunctionQuality', 'Preshadow', 'SpotLight', 'TiledDeferredShading', 'AOApplyToStaticIndirect', 'ContactShadows', 'InstanceCulling']
 
-    def get_ini_content(self):
-        ini_content = ""
+        if any(keyword in option for keyword in graphics_keywords):
+            return 'Graphics'
+        elif any(keyword in option for keyword in shadows_keywords):
+            return 'Shadows'
+        elif any(keyword in option for keyword in miscellaneous_keywords):
+            return 'Miscellaneous'
+        return None
+
+    def update_option_in_all_sections(self, option: str, new_value: str):
         for section in self.config.sections():
-            ini_content += f"[{section}]\n"
-            for option in self.config.options(section):
-                ini_content += f"{option} = {self.config.get(section, option)}\n"
-            ini_content += "\n"
-        return ini_content
+            if self.config.has_option(section, option):
+                self.config.set(section, option, new_value)
+
+    def get_ini_content(self) -> str:
+        return '\n\n'.join(
+            [f'[{section}]\n' + '\n'.join([f'{option} = {value}' for option, value in self.config.items(section)])
+             for section in self.config.sections()])
+
+    @property
+    def sections(self) -> Dict[str, Dict[str, str]]:
+        return self.get_sections_and_options()
+
+
+if __name__ == "__main__":
+    parser = IniParser()
+    ini_content = """
+    [section1]
+    option1 = value1
+    option2 = value2
+
+    [section2]
+    option1 = value3
+    option2 = value4
+    """
+
+    parser.parse_ini(ini_content)
+    print(parser.get_ini_content())
