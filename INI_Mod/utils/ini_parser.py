@@ -116,6 +116,11 @@ class IniParser:
             if self.config.has_option(section, option):
                 self.config.set(section, option, new_value)
 
+    def update_option_value(self, section, option, value):
+        if self.config.has_section(section) and self.config.has_option(section, option):
+            self.config.set(section, option, value)
+
+
     def get_ini_content(self) -> str:
         return '\n\n'.join(
             [f'[{section}]\n' + '\n'.join([f'{option} = {value}' for option, value in self.config.items(section)])
