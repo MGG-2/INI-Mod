@@ -74,12 +74,56 @@ class INIEditor(ctk.CTk):
             'Miscellaneous': []
         }
 
-        # Mapping of settings to their comments
         comments = {
-            # Add the comments for each setting here, for example:
             'r.TextureStreaming': 'Disable texture streaming to load all textures at startup',
             'r.MaxAnisotropy': 'Set the maximum anisotropic filtering level',
-            # ... (add all other settings and their comments)
+            'r.Streaming.PoolSize': 'Set the memory pool size (in MB) for texture streaming',
+            'r.PostProcessAAQuality': 'Set the quality of post-process anti-aliasing',
+            'r.MotionBlurQuality': 'Disable motion blur effect',
+            'r.DepthOfFieldQuality': 'Disable depth of field effect',
+            'r.LensFlareQuality': 'Disable lens flare effect',
+            'r.EyeAdaptationQuality': 'Disable eye adaptation effect',
+            'r.BloomQuality': 'Disable bloom effect',
+            'r.MaterialQualityLevel': 'Set the material quality level (0 for low, 1 for high)',
+            'r.RefractionQuality': 'Set the quality of refraction effects',
+            'r.SSR.Quality': 'Set the quality of screen space reflections',
+            'r.RayTracing': 'Disable ray tracing effects',
+            'r.GlobalIllumination': 'Disable global illumination effects',
+            'r.Tessellation': 'Disable tessellation effects',
+            'r.Atmosphere': 'Disable atmosphere effects',
+            'r.SkyAtmosphere': 'Disable sky atmosphere effects',
+            'r.VolumetricCloud': 'Disable volumetric cloud effects',
+            'r.Fog': 'Disable fog effects',
+            'r.ShadowQuality': 'Set the overall quality of shadows',
+            'r.Shadow.CSM.MaxCascades': 'Set the maximum number of cascades for Cascaded Shadow Maps (CSM)',
+            'r.Shadow.RadiusThreshold': 'Set the threshold radius for shadow rendering',
+            'r.Shadow.DistanceScale': 'Set the scale factor for shadow distance',
+            'r.Shadow.CSM.TransitionScale': 'Set the transition scale for CSM',
+            'r.DistanceFieldShadowing': 'Disable distance field shadowing',
+            'r.Shadow.MaxResolution': 'Set the maximum resolution for shadows',
+            'r.Shadow.MaxCSMResolution': 'Set the maximum resolution for CSM',
+            'r.Shadow.PerObject': 'Enable per-object shadow rendering',
+            'r.Shadow.FadeExponent': 'Set the fade exponent for shadow fading',
+            'r.Shadow.TransitionScale': 'Set the transition scale for shadow transitions',
+            'r.LightMaxDrawDistanceScale': 'Set the scale factor for the maximum draw distance of lights',
+            'r.CapsuleDirectShadows': 'Disable capsule direct shadows',
+            'r.CapsuleIndirectShadows': 'Disable capsule indirect shadows',
+            'r.CapsuleMaxDirectOcclusionDistance': 'Set the maximum distance for direct occlusion by capsule shadows',
+            'r.CapsuleMaxIndirectOcclusionDistance': 'Set the maximum distance for indirect occlusion by capsule shadows',
+            'r.CapsuleShadows': 'Disable capsule shadows',
+            'r.LightFunctionQuality': 'Set the quality of light functions',
+            'r.TranslucentLightingVolume': 'Disable translucent lighting volume',
+            'r.OneFrameThreadLag': 'Enable one frame thread lag to improve performance',
+            'r.TriangleOrderOptimization': 'Enable triangle order optimization',
+            'r.UniformBufferPooling': 'Enable uniform buffer pooling',
+            'r.OptimizeForUAVPerformance': 'Disable optimization for UAV performance',
+            'r.InstanceCulling': 'Disable instance culling',
+            'r.HairStrands.Cull': 'Disable culling of hair strands',
+            'r.HairStrands.Binding': 'Disable binding of hair strands',
+            'r.HairStrands.Strands': 'Disable rendering of individual hair strands',
+            'r.HairStrands.Cards': 'Disable rendering of hair cards',
+            'r.HairStrands.Enable': 'Disable hair strands rendering',
+            'r.HairStrands.Simulation': 'Disable simulation of hair strands'
         }
 
         for section, options in self.parser.sections.items():
