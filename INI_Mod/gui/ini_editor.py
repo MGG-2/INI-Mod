@@ -63,9 +63,16 @@ class INIEditor(ctk.CTk):
             self.parser.parse_ini(ini_content)
             self.tab_view = self.create_tab_view()
             self.populate_tabs()
+            self.create_text_box()
         except Exception as e:
             logging.error(f"Error loading INI file: {e}")
             messagebox.showerror("Error", "Failed to load the INI file.")
+
+    def create_text_box(self):
+        self.text_box = ctk.CTkTextbox(self, height=10)  # Adjust the height as needed
+        self.text_box.grid(row=1, column=1, sticky="nsew", padx=(50, 50), pady=(0, 20))  # Adjust the padding as needed
+        self.text_box.insert(tk.END, "Changes will be displayed here...")
+        self.text_box.configure(state=tk.DISABLED)
 
     def categorize_settings(self):
         categories = {
@@ -183,6 +190,9 @@ class INIEditor(ctk.CTk):
         try:
             self.parser.config.set(section, option, value)
             logging.info(f"Updated {option} in {section} to {value}")
+            self.text_box.configure(state=tk.NORMAL)
+            self.text_box.insert(tk.END, f"\nChanged value for {option} to {value}")  # Added this line to display the change in the text box
+            self.text_box.configure(state=tk.DISABLED)
         except Exception as e:
             logging.error(f"Error updating option value: {e}")
             messagebox.showerror("Error", f"Failed to update the option {option} in section {section}.")
