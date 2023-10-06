@@ -153,6 +153,7 @@ class INIEditor(ctk.CTk):
                 entry = ctk.CTkEntry(scroll_frame)
                 entry.insert(0, value)
                 entry.grid(row=row, column=1, sticky="ew")
+                entry.bind("<FocusOut>", lambda event, sec=section, opt=option, ent=entry: self.update_option_value(sec, opt, ent.get()))  # Updated this line
                 ctk.CTkLabel(scroll_frame, text=f" {comment}", fg_color="transparent").grid(row=row, column=2, sticky="w")
                 row += 1
 
@@ -164,6 +165,7 @@ class INIEditor(ctk.CTk):
             self.save_current_state_to_file(file_path)
         else:
             logging.debug("Save operation cancelled.")
+            
 
     def save_current_state_to_file(self, file_path):
         try:
