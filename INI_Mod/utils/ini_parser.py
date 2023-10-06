@@ -67,7 +67,7 @@ class IniParser:
             ctk_tabview_options = sections_and_options['CTkTabview']
             categorized_options = {
                 'Graphics': {},
-                'Shadows': {},
+                'Lighting Settings': {},
                 'Miscellaneous': {}
             }
 
@@ -81,15 +81,33 @@ class IniParser:
         return sections_and_options
 
     def get_category(self, option: str) -> Optional[str]:
-        graphics_keywords = ['Bloom', 'HDR', 'Fog', 'Atmosphere', 'LensFlare', 'DepthOfField', 'AmbientOcclusion', 'Quality', 'AntiAliasing', 'Anisotropy', 'SSR']
-        shadows_keywords = ['Shadow']
-        miscellaneous_keywords = ['OneFrameThreadLag', 'TriangleOrderOptimization', 'AllowLandscapeShadows', 'AllowStaticLighting', 'EyeAdaptationQuality', 'IndirectLightingCache', 'LightFunctionQuality', 'Preshadow', 'SpotLight', 'TiledDeferredShading', 'AOApplyToStaticIndirect', 'ContactShadows', 'InstanceCulling']
+        graphics_keywords = [
+            'texturestreaming', 'maxanisotropy', 'streaming.poolsize', 'postprocessaaquality',
+            'motionblurquality', 'depthoffieldquality', 'lensflarequality', 'eyeadaptationquality',
+            'bloomquality', 'materialqualitylevel', 'refractionquality', 'ssr.quality', 'raytracing',
+            'globalillumination', 'tessellation', 'atmosphere', 'skyatmosphere', 'volumetriccloud', 'fog'
+        ]
 
-        if any(keyword in option for keyword in graphics_keywords):
+        lighting_settings_keywords = [
+            'shadowquality', 'shadow.csm.maxcascades', 'shadow.radiusthreshold', 'shadow.distancescale',
+            'shadow.csm.transitionscale', 'distancefieldshadowing', 'shadow.maxresolution', 'shadow.maxcsmresolution',
+            'shadow.perobject', 'shadow.fadeexponent', 'shadow.transitionscale', 'lightmaxdrawdistancescale',
+            'capsuledirectshadows', 'capsuleindirectshadows', 'capsulemaxdirectocclusiondistance',
+            'capsulemaxindirectocclusiondistance', 'capsuleshadows', 'lightfunctionquality', 'translucentlightingvolume'
+        ]
+
+        miscellaneous_keywords = [
+            'oneframethreadlag', 'triangleorderoptimization', 'uniformbufferpooling', 'optimizeforuavperformance',
+            'instanceculling', 'hairstrands.cull', 'hairstrands.binding', 'hairstrands.strands', 'hairstrands.cards',
+            'hairstrands.enable', 'hairstrands.simulation'
+        ]
+
+        option_lower = option.lower()
+        if any(keyword in option_lower for keyword in graphics_keywords):
             return 'Graphics'
-        elif any(keyword in option for keyword in shadows_keywords):
-            return 'Shadows'
-        elif any(keyword in option for keyword in miscellaneous_keywords):
+        elif any(keyword in option_lower for keyword in lighting_settings_keywords):
+            return 'Lighting Settings'
+        elif any(keyword in option_lower for keyword in miscellaneous_keywords):
             return 'Miscellaneous'
         return None
 

@@ -70,24 +70,38 @@ class INIEditor(ctk.CTk):
     def categorize_settings(self):
         categories = {
             'Graphics': [],
-            'Shadow Settings': [],
+            'Lighting Settings': [],
             'Miscellaneous': []
         }
 
         # Updated keywords based on the provided .ini file settings
-        graphics_keywords = ['bloom', 'hdr', 'fog', 'atmosphere', 'lensflare', 'depthoffield', 'ambientocclusion', 
-                             'ssr', 'sss', 'upscale', 'refraction', 'scene', 'tonemapper']
-        shadow_settings_keywords = ['shadow', 'csm', 'distancefieldshadowing']
-        miscellaneous_keywords = ['oneframethreadlag', 'triangleorderoptimization', 'allowlandscapeshadows', 
-                                  'allowstaticlighting', 'eyeadaptationquality', 'indirectlightingcache', 
-                                  'lightfunctionquality', 'instanceculling']
+        graphics_keywords = [
+            'texturestreaming', 'maxanisotropy', 'streaming.poolsize', 'postprocessaaquality',
+            'motionblurquality', 'depthoffieldquality', 'lensflarequality', 'eyeadaptationquality',
+            'bloomquality', 'materialqualitylevel', 'refractionquality', 'ssr.quality', 'raytracing',
+            'globalillumination', 'tessellation', 'atmosphere', 'skyatmosphere', 'volumetriccloud', 'fog'
+        ]
+
+        lighting_settings_keywords = [
+            'shadowquality', 'shadow.csm.maxcascades', 'shadow.radiusthreshold', 'shadow.distancescale',
+            'shadow.csm.transitionscale', 'distancefieldshadowing', 'shadow.maxresolution', 'shadow.maxcsmresolution',
+            'shadow.perobject', 'shadow.fadeexponent', 'shadow.transitionscale', 'lightmaxdrawdistancescale',
+            'capsuledirectshadows', 'capsuleindirectshadows', 'capsulemaxdirectocclusiondistance',
+            'capsulemaxindirectocclusiondistance', 'capsuleshadows', 'lightfunctionquality', 'translucentlightingvolume'
+        ]
+
+        miscellaneous_keywords = [
+            'oneframethreadlag', 'triangleorderoptimization', 'uniformbufferpooling', 'optimizeforuavperformance',
+            'instanceculling', 'hairstrands.cull', 'hairstrands.binding', 'hairstrands.strands', 'hairstrands.cards',
+            'hairstrands.enable', 'hairstrands.simulation'
+        ]
 
         for section, options in self.parser.sections.items():
             for option, value in options.items():
                 if any(keyword in option.lower() for keyword in graphics_keywords):
                     categories['Graphics'].append((section, option, value))
-                elif any(keyword in option.lower() for keyword in shadow_settings_keywords):
-                    categories['Shadow Settings'].append((section, option, value))
+                elif any(keyword in option.lower() for keyword in lighting_settings_keywords):
+                    categories['Lighting Settings'].append((section, option, value))
                 elif any(keyword in option.lower() for keyword in miscellaneous_keywords):
                     categories['Miscellaneous'].append((section, option, value))
 
@@ -111,7 +125,23 @@ class INIEditor(ctk.CTk):
                 entry = ctk.CTkEntry(scroll_frame)
                 entry.insert(0, value)
                 entry.grid(row=row, column=1, sticky="ew")
+
+                # Add comments
+                comment = self.get_comment_for_option(option)
+                if comment:
+                    ctk.CTkLabel(scroll_frame, text=f"({comment})", fg_color="grey").grid(row=row, column=2, sticky="w")
+
                 row += 1
+
+    def get_comment_for_option(self, option):
+        # You can expand this dictionary to include comments for more options
+        comments = {
+            'r.DefaultFeature.Bloom': 'Enables or disables the bloom effect.',
+            'r.MobileHDR': 'Toggles high dynamic range for mobile.',
+            # ... add more option-comment pairs as needed
+        }
+
+        return comments.get(option)
 
 
     def save_ini_file(self):
