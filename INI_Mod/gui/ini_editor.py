@@ -6,7 +6,7 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-
+ctk.set_default_color_theme("INI_Mod/themes/themes.json")
 class INIEditor(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -16,7 +16,7 @@ class INIEditor(ctk.CTk):
         self.geometry("1100x580")
 
         ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("blue")
+        
 
         self.configure_grid()
         self.sidebar = self.create_sidebar()
@@ -33,9 +33,10 @@ class INIEditor(ctk.CTk):
         sidebar.grid(row=0, column=0, rowspan=3, sticky="nsew")  # Adjusted rowspan to 3
         sidebar.grid_rowconfigure(3, weight=1)  # Adjusted this line to set rowconfigure to 3
 
-        ctk.CTkLabel(sidebar, text="INI Editor").grid(row=0, column=0, padx=20, pady=(20, 10))
-        ctk.CTkButton(sidebar, text="Open INI File", command=self.open_ini_file).grid(row=1, column=0, padx=20, pady=10)
-        ctk.CTkButton(sidebar, text="Save INI File", command=self.save_ini_file).grid(row=2, column=0, padx=20, pady=10)
+        self.logo_label = ctk.CTkLabel(sidebar, text="INI EDITOR", text_color=("#3dc722"), font=ctk.CTkFont(size=25, weight="bold"))
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        ctk.CTkButton(sidebar, text="Open INI File", fg_color="#12380a", command=self.open_ini_file, font=ctk.CTkFont(weight="bold")).grid(row=1, column=0, padx=20, pady=10)
+        ctk.CTkButton(sidebar, text="Save INI File", fg_color="#12380a", command=self.save_ini_file, font=ctk.CTkFont(weight="bold")).grid(row=2, column=0, padx=20, pady=10)
 
         return sidebar
 
@@ -69,8 +70,8 @@ class INIEditor(ctk.CTk):
             messagebox.showerror("Error", "Failed to load the INI file.")
 
     def create_text_box(self):
-        self.text_box = ctk.CTkTextbox(self)  # Adjust the height as needed
-        self.text_box.grid(row=1, column=1, sticky="nsew", padx=(50, 500), pady=(0, 20))  # Adjust the padding as needed
+        self.text_box = ctk.CTkTextbox(self)
+        self.text_box.grid(row=1, column=1, sticky="nsew", padx=(50, 500), pady=(0, 20))  # Adjust the padding
         self.text_box.insert(tk.END, "Changes will be displayed here")
         self.text_box.configure(state=tk.DISABLED)
 
