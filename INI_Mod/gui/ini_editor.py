@@ -69,9 +69,9 @@ class INIEditor(ctk.CTk):
             messagebox.showerror("Error", "Failed to load the INI file.")
 
     def create_text_box(self):
-        self.text_box = ctk.CTkTextbox(self, height=10)  # Adjust the height as needed
-        self.text_box.grid(row=1, column=1, sticky="nsew", padx=(50, 50), pady=(0, 20))  # Adjust the padding as needed
-        self.text_box.insert(tk.END, "Changes will be displayed here...")
+        self.text_box = ctk.CTkTextbox(self)  # Adjust the height as needed
+        self.text_box.grid(row=1, column=1, sticky="nsew", padx=(50, 500), pady=(0, 20))  # Adjust the padding as needed
+        self.text_box.insert(tk.END, "Changes will be displayed here")
         self.text_box.configure(state=tk.DISABLED)
 
     def categorize_settings(self):
@@ -160,7 +160,7 @@ class INIEditor(ctk.CTk):
                 entry = ctk.CTkEntry(scroll_frame)
                 entry.insert(0, value)
                 entry.grid(row=row, column=1, sticky="ew")
-                entry.bind("<FocusOut>", lambda event, sec=section, opt=option, ent=entry: self.update_option_value(sec, opt, ent.get()))  # Updated this line
+                entry.bind("<KeyRelease>", lambda event, sec=section, opt=option, ent=entry: self.update_option_value(sec, opt, ent.get()))  # Updated this line
                 ctk.CTkLabel(scroll_frame, text=f" {comment}", fg_color="transparent").grid(row=row, column=2, sticky="w")
                 row += 1
 
@@ -188,14 +188,33 @@ class INIEditor(ctk.CTk):
 
     def update_option_value(self, section, option, value):
         try:
-            self.parser.config.set(section, option, value)
-            logging.info(f"Updated {option} in {section} to {value}")
-            self.text_box.configure(state=tk.NORMAL)
-            self.text_box.insert(tk.END, f"\nChanged value for {option} to {value}")  # Added this line to display the change in the text box
-            self.text_box.configure(state=tk.DISABLED)
+            current_value = self.parser.config.get(section, option)
+            if current_value != value:  # Add this line to check if the value actually changed
+                self.parser.config.set(section, option, value)
+                logging.info(f"Updated {option} in {section} to {value}")
+
+                self.text_box.configure(state=tk.NORMAL)  # Enable editing to insert the update message
+
+                current_content = self.text_box.get("1.0", tk.END)
+                if f"{option}" in current_content:
+                    # If the option is already displayed, update the value only
+                    lines = current_content.splitlines()
+                    for i, line in enumerate(lines):
+                        if f"{option}" in line:
+                            lines[i] = f"{option} = {value}"
+                            break
+                    new_content = "\n".join(lines)
+                    self.text_box.delete("1.0", tk.END)
+                    self.text_box.insert(tk.END, new_content.strip())  # Updated to remove extra newline at the end
+                else:
+                    # If the option is not displayed yet, display it with the value
+                    self.text_box.insert(tk.END, f"\n{option} = {value}")
+
+                self.text_box.configure(state=tk.DISABLED)  # Disable editing again after inserting the text
         except Exception as e:
             logging.error(f"Error updating option value: {e}")
             messagebox.showerror("Error", f"Failed to update the option {option} in section {section}.")
+
 
 
 if __name__ == "__main__":
