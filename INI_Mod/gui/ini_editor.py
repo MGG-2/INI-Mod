@@ -21,6 +21,12 @@ class INIEditor(ctk.CTk):
         self.configure_grid()
         self.sidebar = self.create_sidebar()
         self.tab_view = None
+        self.bind("<Button-1>", self.on_mouse_click)
+        
+
+    def on_mouse_click(self, event):
+        # Print the exact x and y coordinates of the mouse click to the console
+        print(f"x={event.x}, y={event.y}")
 
     def configure_grid(self):
         self.grid_columnconfigure(1, weight=1)
@@ -65,14 +71,20 @@ class INIEditor(ctk.CTk):
             self.tab_view = self.create_tab_view()
             self.populate_tabs()
             self.create_text_box()
+            self.label_changed()
         except Exception as e:
             logging.error(f"Error loading INI file: {e}")
             messagebox.showerror("Error", "Failed to load the INI file.")
 
+    def label_changed(self):
+        
+        self.updatetext = ctk.CTkLabel(master=self, font=ctk.CTkFont(weight="bold"), fg_color="transparent", text="Changes will be displayed here")
+        self.updatetext.place(x=233, y=313)
+
     def create_text_box(self):
+
         self.text_box = ctk.CTkTextbox(self)
         self.text_box.grid(row=1, column=1, sticky="nsew", padx=(50, 500), pady=(0, 20))  # Adjust the padding
-        self.text_box.insert(tk.END, "Changes will be displayed here")
         self.text_box.configure(state=tk.DISABLED)
 
     def categorize_settings(self):
