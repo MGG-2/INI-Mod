@@ -7,6 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 ctk.set_default_color_theme("INI_Mod/themes/themes.json")
+
 class INIEditor(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -19,14 +20,15 @@ class INIEditor(ctk.CTk):
         
 
         self.configure_grid()
-        self.sidebar = self.create_sidebar()
+        self.create_sidebar()
         self.tab_view = None
-        self.bind("<Button-1>", self.on_mouse_click)
-        
 
+
+        self.bind("<Button-1>", self.on_mouse_click)
     def on_mouse_click(self, event):
         # Print the exact x and y coordinates of the mouse click to the console
         print(f"x={event.x}, y={event.y}")
+        
 
     def configure_grid(self):
         self.grid_columnconfigure(1, weight=1)
@@ -35,9 +37,9 @@ class INIEditor(ctk.CTk):
 
     def create_sidebar(self):
         
-        sidebar = ctk.CTkFrame(self)
-        sidebar.grid(row=0, column=0, rowspan=3, sticky="nsew")  # Adjusted rowspan to 3
-        sidebar.grid_rowconfigure(3, weight=1)  # Adjusted this line to set rowconfigure to 3
+        sidebar = ctk.CTkFrame(self, corner_radius=(0))
+        sidebar.grid(row=0, column=0, rowspan=3, sticky="nsew")
+        sidebar.grid_rowconfigure(3, weight=1)
 
         self.logo_label = ctk.CTkLabel(sidebar, text="INI EDITOR", text_color=("#3dc722"), font=ctk.CTkFont(size=25, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
@@ -78,8 +80,9 @@ class INIEditor(ctk.CTk):
 
     def label_changed(self):
         
-        self.updatetext = ctk.CTkLabel(master=self, font=ctk.CTkFont(weight="bold"), fg_color="transparent", text="Changes will be displayed here")
-        self.updatetext.place(x=233, y=313)
+        self.updatetext = ctk.CTkLabel(self, corner_radius=(0))
+        self.updatetext.configure(self, fg_color="transparent", text="Changes will be displayed here", font=ctk.CTkFont(weight="bold"))
+        self.updatetext.place(x=233, y=312)
 
     def create_text_box(self):
 
@@ -177,7 +180,6 @@ class INIEditor(ctk.CTk):
                 ctk.CTkLabel(scroll_frame, text=f" {comment}", fg_color="transparent").grid(row=row, column=2, sticky="w")
                 row += 1
 
-
     def save_ini_file(self):
         file_path = filedialog.asksaveasfilename(defaultextension=".ini",
                                                 filetypes=[("INI files", "*.ini"), ("All Files", "*.*")])
@@ -186,7 +188,6 @@ class INIEditor(ctk.CTk):
         else:
             logging.debug("Save operation cancelled.")
             
-
     def save_current_state_to_file(self, file_path):
         try:
             content = self.parser.get_ini_content()
@@ -210,17 +211,14 @@ class INIEditor(ctk.CTk):
 
                 current_content = self.text_box.get("1.0", tk.END)
                 if f"{option}" in current_content:
-                    # If the option is already displayed, update the value only
                     lines = current_content.splitlines()
                     for i, line in enumerate(lines):
                         if f"{option}" in line:
-                            lines[i] = f"{option} = {value}"
+                            index = i + 1  # Get the line number where the option is found
+                            self.text_box.delete(f"{index}.0", f"{index}.end")  # Delete the old line
+                            self.text_box.insert(f"{index}.0", f"{option} = {value}")  # Insert the updated line at the same position
                             break
-                    new_content = "\n".join(lines)
-                    self.text_box.delete("1.0", tk.END)
-                    self.text_box.insert(tk.END, new_content.strip())  # Updated to remove extra newline at the end
                 else:
-                    # If the option is not displayed yet, display it with the value
                     self.text_box.insert(tk.END, f"\n{option} = {value}")
 
                 self.text_box.configure(state=tk.DISABLED)  # Disable editing again after inserting the text
